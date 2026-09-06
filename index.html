@@ -1,0 +1,1810 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<title>立體圖形演示台</title>
+<style>
+:root{
+  --ground:#ffffff; --surface:#f4f6f8; --surface2:#eaeef2;
+  --line:#dfe4e9; --lineStrong:#c3ccd4;
+  --ink:#171c22; --sub:#4b5560; --mute:#8a939d;
+  --accent:#c0392b;
+  --face:#d8e5f1; --faceBack:#adc4d9; --edge:#2c3b49;
+  --warnFace:#eec6c0; --warnEdge:#96382c;
+  --ok:#2f6b4f;
+  --grid:#eef1f4;
+  --p1:#cfe0f0; --p2:#e2dcee; --p3:#d9e8da;
+  --hl1:#e6d0bd; --hl2:#c9e0d2;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#12161a; --surface:#191f25; --surface2:#212a32;
+    --line:#2b333c; --lineStrong:#3d4852;
+    --ink:#e9edf1; --sub:#a9b3bd; --mute:#78838e;
+    --accent:#e0685a;
+    --face:#33506d; --faceBack:#21354a; --edge:#cbd8e4;
+    --warnFace:#63302a; --warnEdge:#e0685a;
+    --ok:#6fbf95;
+    --grid:#1b222a;
+    --p1:#2e4c69; --p2:#3c3a5e; --p3:#2c4a3b;
+    --hl1:#5c4531; --hl2:#2c4b3d;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#12161a; --surface:#191f25; --surface2:#212a32;
+  --line:#2b333c; --lineStrong:#3d4852;
+  --ink:#e9edf1; --sub:#a9b3bd; --mute:#78838e;
+  --accent:#e0685a;
+  --face:#33506d; --faceBack:#21354a; --edge:#cbd8e4;
+  --warnFace:#63302a; --warnEdge:#e0685a;
+  --ok:#6fbf95;
+  --grid:#1b222a;
+  --p1:#2e4c69; --p2:#3c3a5e; --p3:#2c4a3b;
+  --hl1:#5c4531; --hl2:#2c4b3d;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC","Hiragino Sans TC",sans-serif;
+  font-size:17px; line-height:1.62; -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums}
+
+.wrap{max-width:1580px; margin:0 auto; padding:18px 22px 26px; display:flex; flex-direction:column; gap:14px; min-height:100vh}
+
+header{display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap}
+h1{font-size:27px; font-weight:700; margin:0; letter-spacing:.01em}
+.sub{color:var(--mute); font-size:14px; margin:2px 0 0}
+.hint{color:var(--mute); font-size:13.5px; text-align:right; line-height:1.9}
+.hint kbd{
+  font-family:"IBM Plex Mono",monospace; font-size:12.5px; border:1px solid var(--line);
+  border-bottom-width:2px; border-radius:4px; padding:1px 6px; color:var(--sub); background:var(--surface);
+}
+
+nav{display:flex; gap:6px; overflow-x:auto; padding-bottom:3px}
+nav button{
+  flex:0 0 auto; display:flex; flex-direction:column; align-items:flex-start; gap:0;
+  background:var(--surface); border:1px solid var(--line); border-radius:2px;
+  padding:7px 13px 8px; cursor:pointer; font-family:inherit; text-align:left; min-width:82px;
+}
+nav button .q{font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.08em; color:var(--mute); line-height:1.5}
+nav button .t{font-size:15.5px; font-weight:500; color:var(--ink); line-height:1.45; white-space:nowrap}
+nav button:hover{border-color:var(--lineStrong)}
+nav button[aria-selected="true"]{background:var(--ink); border-color:var(--ink)}
+nav button[aria-selected="true"] .t{color:var(--ground)}
+nav button[aria-selected="true"] .q{color:var(--ground); opacity:.6}
+nav .sep{flex:0 0 auto; width:1px; background:var(--line); margin:2px 6px}
+
+.main{display:grid; grid-template-columns:minmax(0,1fr) 386px; gap:14px; flex:1; min-height:0}
+.stage{position:relative; background:var(--surface); border:1px solid var(--line); display:flex; flex-direction:column; min-height:480px}
+canvas{display:block; width:100%; flex:1; min-height:0; touch-action:none; cursor:grab}
+canvas:active{cursor:grabbing}
+.stagenote{
+  position:absolute; left:16px; top:13px; font-size:13.5px; color:var(--mute);
+  font-family:"IBM Plex Mono",monospace; letter-spacing:.05em; pointer-events:none;
+}
+.verdict{
+  position:absolute; right:16px; top:11px; font-size:15px; font-weight:500;
+  padding:4px 12px; border:1px solid var(--line); background:var(--ground); pointer-events:none;
+}
+.verdict[data-state="good"]{color:var(--ok); border-color:var(--ok)}
+.verdict[data-state="bad"]{color:var(--accent); border-color:var(--accent)}
+.verdict[data-state="idle"]{color:var(--mute)}
+
+.controls{border-top:1px solid var(--line); padding:12px 16px 14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; background:var(--ground)}
+.readout{min-width:126px}
+.readout .num{font-family:"IBM Plex Mono",monospace; font-size:32px; font-weight:500; line-height:1}
+.readout .unit{font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--mute)}
+.readout .cap{font-size:12.5px; color:var(--mute); letter-spacing:.07em; display:block}
+input[type=range]{-webkit-appearance:none; appearance:none; flex:1; min-width:190px; height:34px; background:transparent; cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:6px; background:var(--surface2); border:1px solid var(--line)}
+input[type=range]::-moz-range-track{height:6px; background:var(--surface2); border:1px solid var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:26px; height:26px; margin-top:-11px; border-radius:50%; background:var(--ink); border:3px solid var(--ground); box-shadow:0 0 0 1px var(--ink)}
+input[type=range]::-moz-range-thumb{width:26px; height:26px; border-radius:50%; background:var(--ink); border:3px solid var(--ground); box-shadow:0 0 0 1px var(--ink)}
+input[type=range]:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+
+button.act{
+  font-family:inherit; font-size:16px; font-weight:500; padding:9px 18px; cursor:pointer;
+  background:var(--ink); color:var(--ground); border:1px solid var(--ink); border-radius:2px;
+}
+button.act.ghost{background:transparent; color:var(--ink)}
+button.act[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#fff}
+button.act:hover{opacity:.87}
+button:focus-visible, [role=tab]:focus-visible, summary:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+.rail{display:flex; flex-direction:column; gap:12px; overflow-y:auto; min-height:0; padding-right:2px}
+.panel{border:1px solid var(--line); background:var(--ground); padding:15px 17px}
+.panel h2{font-size:12px; letter-spacing:.14em; color:var(--mute); font-weight:500; margin:0 0 9px}
+.panel p{margin:0 0 9px; font-size:16.5px; color:var(--sub)}
+.panel p:last-child{margin-bottom:0}
+.panel strong{color:var(--ink); font-weight:700}
+.panel .em{color:var(--accent); font-weight:700}
+.stem{font-size:17px; color:var(--ink); margin:0}
+
+.rule{display:flex; gap:10px; align-items:flex-start; margin-bottom:8px; font-size:16.5px; color:var(--sub)}
+.rule:last-child{margin-bottom:0}
+.rule i{
+  flex:0 0 auto; width:21px; height:21px; background:var(--ink); color:var(--ground);
+  font-style:normal; font-size:12px; font-weight:700; display:grid; place-items:center; margin-top:4px;
+  font-family:"IBM Plex Mono",monospace;
+}
+
+.answer{border:1px solid var(--line); background:var(--surface)}
+.answer summary{cursor:pointer; padding:12px 17px; font-size:16px; font-weight:500; color:var(--ink); list-style:none; display:flex; justify-content:space-between; align-items:center}
+.answer summary::-webkit-details-marker{display:none}
+.answer summary::after{content:"顯示"; font-size:13px; color:var(--mute); font-family:"IBM Plex Mono",monospace}
+.answer[open] summary::after{content:"收起"}
+.answer .body{padding:0 17px 15px; font-size:16.5px; color:var(--sub)}
+.answer .body b{color:var(--accent); font-size:20px; font-family:"IBM Plex Mono",monospace}
+
+.opts{display:flex; flex-wrap:wrap; gap:6px}
+.opts button{
+  font-family:inherit; font-size:15.5px; padding:7px 13px; cursor:pointer; border-radius:2px;
+  background:var(--ground); color:var(--sub); border:1px solid var(--line);
+}
+.opts button[aria-pressed="true"]{background:var(--ink); color:var(--ground); border-color:var(--ink)}
+
+.viewbtns{display:flex; flex-wrap:wrap; gap:8px}
+.viewbtns button{
+  font-family:inherit; font-size:16px; font-weight:500; padding:9px 18px; cursor:pointer; border-radius:2px;
+  background:var(--ground); color:var(--ink); border:1px solid var(--lineStrong);
+}
+.viewbtns button[aria-pressed="true"]{background:var(--ink); color:var(--ground); border-color:var(--ink)}
+.viewbtns button:hover{border-color:var(--ink)}
+
+.views{display:flex; gap:10px; justify-content:space-between}
+.viewbox{flex:1; text-align:center}
+.viewbox span{display:block; font-size:13px; color:var(--mute); margin-top:5px}
+.viewbox .plate{border:1px solid var(--line); background:var(--surface); padding:8px; display:grid; place-items:center; min-height:82px}
+.hiddenAns .plate svg{visibility:hidden}
+
+canvas.mini{width:100%; height:auto; display:block; background:var(--surface); border:1px solid var(--line)}
+.minicap{font-size:14.5px; color:var(--sub); margin:9px 0 0}
+
+.netgrid{display:flex; flex-direction:column; gap:11px}
+.netrow{display:flex; flex-direction:column; gap:5px}
+.netrow > span{font-size:12px; letter-spacing:.1em; color:var(--mute); font-family:"IBM Plex Mono",monospace}
+.thumbs{display:flex; flex-wrap:wrap; gap:5px}
+.thumb{background:var(--ground); border:1px solid var(--line); padding:5px; cursor:pointer; line-height:0; border-radius:2px}
+.thumb[aria-pressed="true"]{border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent)}
+
+.builder{display:grid; grid-template-columns:repeat(6,32px); gap:3px; justify-content:center}
+.builder button{width:32px; height:32px; padding:0; cursor:pointer; border:1px solid var(--line); background:var(--ground)}
+.builder button[aria-pressed="true"]{background:var(--face); border-color:var(--edge)}
+.builder button.bad{background:var(--warnFace); border-color:var(--warnEdge)}
+.count{font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--mute); text-align:center; margin-top:9px}
+
+@media (max-width:1120px){
+  .main{grid-template-columns:1fr}
+  .stage{min-height:400px}
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none!important} }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>立體圖形演示台</h1>
+      <p class="sub">初一幾何　第六章 6.1</p>
+    </div>
+    <p class="hint">
+      拖曳畫面可轉動角度<br>
+      <kbd>空白鍵</kbd> 播放　<kbd>←</kbd> <kbd>→</kbd> 逐步調整
+    </p>
+  </header>
+
+  <nav role="tablist" id="tabs"></nav>
+
+  <div class="main">
+    <div class="stage">
+      <canvas id="cv"></canvas>
+      <div class="stagenote" id="note"></div>
+      <div class="verdict" id="verdict" data-state="idle" hidden></div>
+      <div class="controls" id="controls"></div>
+    </div>
+    <div class="rail" id="rail"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ==================== 顏色 ==================== */
+const C = {};
+const COLOR_KEYS = ["ground","surface","line","lineStrong","ink","sub","mute","accent",
+  "face","faceBack","edge","warnFace","warnEdge","ok","grid","p1","p2","p3","hl1","hl2"];
+function readColors(){
+  const s = getComputedStyle(document.documentElement);
+  COLOR_KEYS.forEach(k => C[k] = s.getPropertyValue("--" + k).trim());
+}
+readColors();
+if (window.matchMedia){
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  const onChange = () => { readColors(); draw(); paintMinis(); };
+  if (mq.addEventListener) mq.addEventListener("change", onChange);
+  else if (mq.addListener) mq.addListener(onChange);
+}
+new MutationObserver(() => { readColors(); draw(); paintMinis(); })
+  .observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+
+/* ==================== 向量與矩陣 ==================== */
+function mIdent(){ return [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]; }
+function mMul(a,b){
+  const o = new Array(16);
+  for(let r=0;r<4;r++) for(let c=0;c<4;c++){
+    let s = 0; for(let k=0;k<4;k++) s += a[r*4+k]*b[k*4+c];
+    o[r*4+c] = s;
+  }
+  return o;
+}
+function mApply(m,p){
+  return [ m[0]*p[0]+m[1]*p[1]+m[2]*p[2]+m[3],
+           m[4]*p[0]+m[5]*p[1]+m[6]*p[2]+m[7],
+           m[8]*p[0]+m[9]*p[1]+m[10]*p[2]+m[11] ];
+}
+function mTrans(x,y,z){ return [1,0,0,x, 0,1,0,y, 0,0,1,z, 0,0,0,1]; }
+function mRotAxis(px,py,pz, dx,dy,dz, a){
+  const c = Math.cos(a), s = Math.sin(a), t = 1-c;
+  const R = [ t*dx*dx+c,    t*dx*dy-s*dz, t*dx*dz+s*dy, 0,
+              t*dx*dy+s*dz, t*dy*dy+c,    t*dy*dz-s*dx, 0,
+              t*dx*dz-s*dy, t*dy*dz+s*dx, t*dz*dz+c,    0,
+              0,0,0,1 ];
+  return mMul(mTrans(px,py,pz), mMul(R, mTrans(-px,-py,-pz)));
+}
+function mRotX(a){ const c=Math.cos(a), s=Math.sin(a); return [1,0,0,0, 0,c,-s,0, 0,s,c,0, 0,0,0,1]; }
+function mRotY(a){ const c=Math.cos(a), s=Math.sin(a); return [c,0,s,0, 0,1,0,0, -s,0,c,0, 0,0,0,1]; }
+
+/* 座標約定：x 向右，y 向下，z 指向觀察者。
+   多邊形頂點依序計出的法線若指向 +z，即為正面朝向觀察者。 */
+function normalOf(pts){
+  let nx=0, ny=0, nz=0;
+  for(let i=0;i<pts.length;i++){
+    const a = pts[i], b = pts[(i+1)%pts.length];
+    nx += (a[1]-b[1])*(a[2]+b[2]);
+    ny += (a[2]-b[2])*(a[0]+b[0]);
+    nz += (a[0]-b[0])*(a[1]+b[1]);
+  }
+  return [nx,ny,nz];
+}
+function unitNormal(pts){
+  const n = normalOf(pts);
+  const L = Math.hypot(n[0],n[1],n[2]) || 1;
+  return [n[0]/L, n[1]/L, n[2]/L];
+}
+/* 光源由左上前方射過來（螢幕 y 向下，所以「上」是負值） */
+const LIGHT = (function(){ const v=[-0.45,-0.80,0.40], L=Math.hypot(v[0],v[1],v[2]); return [v[0]/L,v[1]/L,v[2]/L]; })();
+function shadeOf(nrm){
+  const k = nrm[2] < 0 ? -1 : 1;              // 兩面都當受光
+  const d = k*nrm[0]*LIGHT[0] + k*nrm[1]*LIGHT[1] + k*nrm[2]*LIGHT[2];
+  return 0.62 + 0.52*(0.5 + 0.5*d);
+}
+function shadeHex(hex, f){
+  const h = String(hex).trim().replace("#","");
+  if(h.length < 6) return hex;
+  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  const c = v => Math.max(0, Math.min(255, Math.round(v*f)));
+  return "rgb(" + c(r) + "," + c(g) + "," + c(b) + ")";
+}
+function orient(pts, out){
+  const n = normalOf(pts);
+  return (n[0]*out[0] + n[1]*out[1] + n[2]*out[2]) < 0 ? pts.slice().reverse() : pts;
+}
+
+/* ==================== 摺疊引擎 ==================== */
+/* 每塊面：{pts:[[x,y]..], parent, hinge:[[x,y],[x,y]], angle, mark, tone} */
+function faceCCW(pts){
+  let a = 0;
+  for(let i=0;i<pts.length;i++){
+    const u = pts[i], v = pts[(i+1)%pts.length];
+    a += u[0]*v[1] - v[0]*u[1];
+  }
+  return a >= 0 ? pts : pts.slice().reverse();
+}
+function foldFaces(faces, t, dir){
+  dir = dir || 1;
+  const M = new Array(faces.length);
+  const out = [];
+  for(let i=0;i<faces.length;i++){
+    const f = faces[i];
+    if(f.parent === null || f.parent === undefined) M[i] = mIdent();
+    else{
+      const p1 = f.hinge[0], p2 = f.hinge[1];
+      let dx = p2[0]-p1[0], dy = p2[1]-p1[1];
+      const L = Math.hypot(dx,dy); dx /= L; dy /= L;
+      let cx = 0, cy = 0;
+      f.pts.forEach(p => { cx += p[0]; cy += p[1]; });
+      cx /= f.pts.length; cy /= f.pts.length;
+      const mx = (p1[0]+p2[0])/2, my = (p1[1]+p2[1])/2;
+      if((dx*(cy-my) - dy*(cx-mx))*dir < 0){ dx = -dx; dy = -dy; }
+      M[i] = mMul(M[f.parent], mRotAxis(p1[0],p1[1],0, dx,dy,0, f.angle*t));
+    }
+    out.push({ pts3: faceCCW(f.pts).map(p => mApply(M[i],[p[0],p[1],0])), mark:f.mark, tone:f.tone });
+  }
+  return out;
+}
+
+function cellsToFaces(cells, marks, tones){
+  const key = c => c[0] + "," + c[1];
+  const idx = new Map(); cells.forEach((c,i) => idx.set(key(c), i));
+  const faces = cells.map(c => ({
+    pts:[[c[0],c[1]],[c[0]+1,c[1]],[c[0]+1,c[1]+1],[c[0],c[1]+1]],
+    parent:null, hinge:null, angle:Math.PI/2,
+    mark:(marks && marks[key(c)]) || null,
+    tone:(tones && tones[key(c)]) || null
+  }));
+  let root = 0, best = -1;
+  cells.forEach((c,i) => {
+    let n = 0;
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(d => { if(idx.has(key([c[0]+d[0], c[1]+d[1]]))) n++; });
+    if(n > best){ best = n; root = i; }
+  });
+  const order = [root], seen = new Set([root]);
+  for(let qi=0; qi<order.length; qi++){
+    const i = order[qi], c = cells[i];
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(d => {
+      const j = idx.get(key([c[0]+d[0], c[1]+d[1]]));
+      if(j === undefined || seen.has(j)) return;
+      seen.add(j); order.push(j);
+      faces[j].parent = i;
+      if(d[0] === 1)  faces[j].hinge = [[c[0]+1,c[1]],[c[0]+1,c[1]+1]];
+      if(d[0] === -1) faces[j].hinge = [[c[0],c[1]],[c[0],c[1]+1]];
+      if(d[1] === 1)  faces[j].hinge = [[c[0],c[1]+1],[c[0]+1,c[1]+1]];
+      if(d[1] === -1) faces[j].hinge = [[c[0],c[1]],[c[0]+1,c[1]]];
+    });
+  }
+  const remap = new Map(); order.forEach((old,ni) => remap.set(old, ni));
+  const sorted = order.map(i => faces[i]);
+  sorted.forEach(f => { if(f.parent !== null) f.parent = remap.get(f.parent); });
+  return sorted;
+}
+
+/* 摺好之後，每一格對應正方體哪一個面 */
+function cubeFaceIds(cells){
+  const key = c => c[0] + "," + c[1];
+  const set = new Map(); cells.forEach((c,i) => set.set(key(c), i));
+  const res = new Array(cells.length).fill(null);
+  const roll = (st,d) => {
+    const U=st[0], D=st[1], N=st[2], S=st[3], E=st[4], W=st[5];
+    if(d[0] === 1)  return [W,E,N,S,U,D];
+    if(d[0] === -1) return [E,W,N,S,D,U];
+    if(d[1] === -1) return [S,N,U,D,E,W];
+    return [N,S,D,U,E,W];
+  };
+  const q = [[0, ["U","D","N","S","E","W"]]];
+  res[0] = "D";
+  const seen = new Set([0]);
+  while(q.length){
+    const item = q.shift(), i = item[0], st = item[1], c = cells[i];
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(d => {
+      const j = set.get(key([c[0]+d[0], c[1]+d[1]]));
+      if(j === undefined || seen.has(j)) return;
+      seen.add(j);
+      const ns = roll(st,d); res[j] = ns[1];
+      q.push([j, ns]);
+    });
+  }
+  return { ids:res, reached:seen.size };
+}
+function netStatus(cells){
+  if(cells.length !== 6) return {ok:false, why:"count", ids:null};
+  const r = cubeFaceIds(cells);
+  if(r.reached !== 6) return {ok:false, why:"split", ids:r.ids};
+  const uniq = new Set(r.ids);
+  return { ok: uniq.size === 6, why: uniq.size === 6 ? null : "overlap", ids:r.ids };
+}
+
+/* ==================== 立體圖形零件 ==================== */
+/* box：yTop 較小（上），zFront 較大（近觀察者） */
+function box(x0,x1, yTop,yBot, zFront,zBack, skip){
+  skip = skip || {};
+  const F = [];
+  const P = (x,y,z) => [x,y,z];
+  if(!skip.front) F.push(orient([P(x0,yTop,zFront),P(x1,yTop,zFront),P(x1,yBot,zFront),P(x0,yBot,zFront)], [0,0,1]));
+  if(!skip.back)  F.push(orient([P(x0,yTop,zBack), P(x1,yTop,zBack), P(x1,yBot,zBack), P(x0,yBot,zBack)],  [0,0,-1]));
+  if(!skip.right) F.push(orient([P(x1,yTop,zFront),P(x1,yTop,zBack), P(x1,yBot,zBack), P(x1,yBot,zFront)], [1,0,0]));
+  if(!skip.left)  F.push(orient([P(x0,yTop,zFront),P(x0,yTop,zBack), P(x0,yBot,zBack), P(x0,yBot,zFront)], [-1,0,0]));
+  if(!skip.top)   F.push(orient([P(x0,yTop,zFront),P(x1,yTop,zFront),P(x1,yTop,zBack), P(x0,yTop,zBack)],  [0,-1,0]));
+  if(!skip.bottom)F.push(orient([P(x0,yBot,zFront),P(x1,yBot,zFront),P(x1,yBot,zBack), P(x0,yBot,zBack)],  [0,1,0]));
+  return F.map(pts => ({pts3:pts}));
+}
+
+/* 直立圓柱：軸沿 y */
+function cylinderY(cx,cz, r, yTop,yBot, N, a0, a1, caps){
+  N = N || 40; a0 = a0 || 0; a1 = (a1 === undefined) ? Math.PI*2 : a1;
+  const out = [], pt = (a,y) => [cx + r*Math.cos(a), y, cz + r*Math.sin(a)];
+  for(let i=0;i<N;i++){
+    const b0 = a0 + (a1-a0)*i/N, b1 = a0 + (a1-a0)*(i+1)/N;
+    const mid = (b0+b1)/2;
+    const outward = [Math.cos(mid), 0, Math.sin(mid)];
+    out.push({ mesh:true, pts3: orient([pt(b0,yTop), pt(b1,yTop), pt(b1,yBot), pt(b0,yBot)], outward) });
+  }
+  if(caps !== false){
+    const ring = y => { const a = []; for(let i=0;i<N;i++) a.push(pt(a0 + (a1-a0)*i/N, y)); if(a1-a0 < Math.PI*2-1e-6) a.push([cx,y,cz]); return a; };
+    out.push({ pts3: orient(ring(yTop), [0,-1,0]) });
+    out.push({ pts3: orient(ring(yBot), [0,1,0]) });
+  }
+  return out;
+}
+
+/* 由積木層數表建立立體：heights[row][col]，row 0 最靠近觀察者 */
+function cubesSolid(heights){
+  const R = heights.length, Cn = heights[0].length;
+  const has = (r,c,l) => r>=0 && r<R && c>=0 && c<Cn && heights[r][c] > l;
+  const out = [];
+  for(let r=0;r<R;r++) for(let c=0;c<Cn;c++) for(let l=0;l<heights[r][c];l++){
+    out.push.apply(out, box(c, c+1, -(l+1), -l, -r, -r-1, {
+      right: has(r,c+1,l), left: has(r,c-1,l),
+      top: has(r,c,l+1), bottom: has(r,c,l-1),
+      front: has(r-1,c,l), back: has(r+1,c,l)
+    }));
+  }
+  return out;
+}
+
+/* 三視圖資料 */
+function threeViews(heights){
+  const R = heights.length, Cn = heights[0].length;
+  const front = [], side = [], top = [];
+  for(let c=0;c<Cn;c++){ let m = 0; for(let r=0;r<R;r++) m = Math.max(m, heights[r][c]); front.push(m); }
+  for(let r=R-1;r>=0;r--){ let m = 0; for(let c=0;c<Cn;c++) m = Math.max(m, heights[r][c]); side.push(m); }
+  for(let r=R-1;r>=0;r--){ const row = []; for(let c=0;c<Cn;c++) row.push(heights[r][c] > 0 ? 1 : 0); top.push(row); }
+  return {front, side, top};
+}
+
+/* ==================== 畫布 ==================== */
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+const noteEl = document.getElementById("note");
+const verdictEl = document.getElementById("verdict");
+
+let scene = null;
+let T = 0;                                  // 摺疊程度
+let cam = {rx:0, ry:0, anim:null};
+let camBase = {rx:0, ry:0};
+let camOff = {rx:0, ry:0};
+function applyCam(){ cam.rx = camBase.rx + camOff.rx; cam.ry = camBase.ry + camOff.ry; }
+let dragOn = false, lastX = 0, lastY = 0;
+
+function ease(t){ return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; }
+
+function draw(){
+  if(!scene) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if(w === 0 || h === 0) return;
+  if(cv.width !== Math.round(w*dpr) || cv.height !== Math.round(h*dpr)){
+    cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr);
+  }
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+
+  const te = ease(T);
+  const polys = scene.polys(te);
+  const anns = scene.anns ? scene.anns(te) : [];
+  const M = mMul(mRotX(cam.rx), mRotY(cam.ry));
+
+  // 以目前角度計出剛好填滿畫面的比例
+  let minx=1e9, maxx=-1e9, miny=1e9, maxy=-1e9;
+  const camPts = polys.map(p => p.pts3.map(v => {
+    const q = mApply(M, v);
+    if(q[0]<minx) minx=q[0]; if(q[0]>maxx) maxx=q[0];
+    if(q[1]<miny) miny=q[1]; if(q[1]>maxy) maxy=q[1];
+    return q;
+  }));
+  const camAnn = anns.map(a => {
+    const r = {p1:mApply(M,a.p1), p2:mApply(M,a.p2), text:a.text};
+    [r.p1, r.p2].forEach(q => {
+      if(q[0]<minx) minx=q[0]; if(q[0]>maxx) maxx=q[0];
+      if(q[1]<miny) miny=q[1]; if(q[1]>maxy) maxy=q[1];
+    });
+    return r;
+  });
+  const pad = 62;
+  const ex = Math.max(maxx-minx, 1e-3), ey = Math.max(maxy-miny, 1e-3);
+  const s = Math.min((w-pad*2)/ex, (h-pad*2)/ey, 250);
+  const ox = w/2 - (minx+maxx)/2*s, oy = h/2 - (miny+maxy)/2*s;
+  const toScreen = q => [ox + q[0]*s, oy + q[1]*s, q[2]];
+
+  // 底格
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+  const g = 38;
+  ctx.beginPath();
+  for(let x=(w/2)%g; x<w; x+=g){ ctx.moveTo(Math.round(x)+0.5, 0); ctx.lineTo(Math.round(x)+0.5, h); }
+  for(let y=(h/2)%g; y<h; y+=g){ ctx.moveTo(0, Math.round(y)+0.5); ctx.lineTo(w, Math.round(y)+0.5); }
+  ctx.stroke();
+
+  // 尺寸線
+  if(camAnn.length && te < 0.995){
+    ctx.globalAlpha = 1 - te;
+    ctx.strokeStyle = C.accent; ctx.fillStyle = C.accent; ctx.lineWidth = 1.5;
+    ctx.font = '500 15px "IBM Plex Mono", monospace';
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    camAnn.forEach(a => {
+      const p1 = toScreen(a.p1), p2 = toScreen(a.p2);
+      ctx.beginPath(); ctx.moveTo(p1[0],p1[1]); ctx.lineTo(p2[0],p2[1]); ctx.stroke();
+      const ang = Math.atan2(p2[1]-p1[1], p2[0]-p1[0]);
+      [[p1,ang],[p2,ang+Math.PI]].forEach(pair => {
+        const p = pair[0], an = pair[1];
+        ctx.beginPath(); ctx.moveTo(p[0],p[1]);
+        ctx.lineTo(p[0]+9*Math.cos(an-0.34), p[1]+9*Math.sin(an-0.34));
+        ctx.lineTo(p[0]+9*Math.cos(an+0.34), p[1]+9*Math.sin(an+0.34));
+        ctx.closePath(); ctx.fill();
+      });
+      const mx = (p1[0]+p2[0])/2, my = (p1[1]+p2[1])/2;
+      const tw = ctx.measureText(a.text).width;
+      ctx.fillStyle = C.ground; ctx.fillRect(mx-tw/2-6, my-11, tw+12, 22);
+      ctx.fillStyle = C.accent; ctx.fillText(a.text, mx, my);
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  // 面（畫家演算法：遠的先畫）
+  const drawn = camPts.map((cp,i) => {
+    const pts = cp.map(toScreen);
+    let z = 0; cp.forEach(v => z += v[2]); z /= cp.length;
+    return {pts, z, src:polys[i], idx:i, nrm: unitNormal(cp)};
+  }).sort((a,b) => (a.src.top ? 1 : 0) - (b.src.top ? 1 : 0) || a.z - b.z);
+
+  ctx.lineJoin = "round";
+  drawn.forEach(d => {
+    const p = d.src, pts = d.pts, n = pts.length;
+    const nrm = d.nrm, front = nrm[2] > 0, lit = shadeOf(nrm);
+
+    let holePts = null;
+    if(p.hole){
+      holePts = p.hole.map(v => toScreen(mApply(M, v)));
+    }
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for(let i=1;i<n;i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.closePath();
+    if(holePts){
+      ctx.moveTo(holePts[0][0], holePts[0][1]);
+      for(let i=holePts.length-1;i>=1;i--) ctx.lineTo(holePts[i][0], holePts[i][1]);
+      ctx.closePath();
+    }
+
+    if(p.outline){
+      ctx.strokeStyle = C.edge; ctx.lineWidth = 2; ctx.stroke();
+      return;
+    }
+    let base = C.face, edge = C.edge;
+    if(scene.mode === "face" && !p.mesh && !p.outline){
+      base = [C.p1, C.p2, C.p3, C.hl2, C.hl1, C.face][d.idx % 6];
+    }
+    else if(p.tone === "warn"){ base = C.warnFace; edge = C.warnEdge; }
+    else if(C[p.tone] && scene.mode !== "face"){ base = C[p.tone]; }
+    ctx.fillStyle = shadeHex(base, lit); ctx.fill(holePts ? "evenodd" : "nonzero");
+    if(!p.mesh){ ctx.strokeStyle = edge; ctx.lineWidth = 1.7; ctx.stroke(); }
+
+    if(p.mark){
+      let cx = 0, cy = 0; pts.forEach(v => { cx += v[0]; cy += v[1]; }); cx /= n; cy /= n;
+      let rad = 0; pts.forEach(v => rad = Math.max(rad, Math.hypot(v[0]-cx, v[1]-cy)));
+      drawMark(p.mark, cx, cy, rad*0.42, front);
+    }
+  });
+
+  // 輪廓線與被擋住的棱
+  (function(){
+    const emap = new Map();
+    const kk = v => Math.round(v[0]*900) + "," + Math.round(v[1]*900) + "," + Math.round(v[2]*900);
+    camPts.forEach((cp,i) => {
+      const p = polys[i];
+      if(p.outline) return;
+      const fr = unitNormal(cp)[2] > 0;
+      for(let k=0;k<cp.length;k++){
+        const a = cp[k], b = cp[(k+1)%cp.length];
+        const ka = kk(a), kb = kk(b);
+        if(ka === kb) continue;
+        const key = ka < kb ? ka + "|" + kb : kb + "|" + ka;
+        let e = emap.get(key);
+        if(!e){ e = {a:a, b:b, cnt:0, fr:0, mesh:false, nm:false}; emap.set(key, e); }
+        e.cnt++; if(fr) e.fr++;
+        if(p.mesh) e.mesh = true; else e.nm = true;
+      }
+    });
+    const solidE = [], dashE = [];
+    emap.forEach(e => {
+      const boundary = e.cnt === 1, silh = (e.cnt >= 2 && e.fr >= 1 && e.fr < e.cnt);
+      const feature = e.fr >= 1 && e.nm;      // 睇得到、而且至少有一邊係平面（例如圓柱底圓）
+      if(boundary || silh || feature) solidE.push(e);
+      else if(!e.mesh && e.fr === 0 && scene.dashHidden) dashE.push(e);
+    });
+    ctx.lineCap = "round";
+    if(dashE.length){
+      ctx.setLineDash([6,6]); ctx.strokeStyle = C.mute; ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      dashE.forEach(e => { const a = toScreen(e.a), b = toScreen(e.b); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); });
+      ctx.stroke(); ctx.setLineDash([]);
+    }
+    if(solidE.length){
+      ctx.strokeStyle = C.edge; ctx.lineWidth = 1.9;
+      ctx.beginPath();
+      solidE.forEach(e => { const a = toScreen(e.a), b = toScreen(e.b); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); });
+      ctx.stroke();
+    }
+    ctx.lineCap = "butt";
+  })();
+
+  // 棱、頂點的標示
+  if(scene.mode === "edge" || scene.mode === "vertex"){
+    const proj = v => toScreen(mApply(M, v));
+    if(scene.mode === "edge"){
+      ctx.strokeStyle = C.accent; ctx.lineWidth = 4; ctx.lineCap = "round";
+      edgesOf(polys).forEach(e => {
+        const a = proj(e[0]), b = proj(e[1]);
+        ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+      });
+      ctx.lineCap = "butt";
+    } else {
+      ctx.fillStyle = C.accent; ctx.strokeStyle = C.ground; ctx.lineWidth = 2;
+      vertsOf(polys).forEach(v => {
+        const a = proj(v);
+        ctx.beginPath(); ctx.arc(a[0], a[1], 7, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+      });
+    }
+  }
+}
+
+/* 直接畫圖案，避免依賴字型 */
+function drawMark(kind, cx, cy, r, front){
+  if(r < 4) return;
+  ctx.save();
+  ctx.globalAlpha = front ? 1 : 0.22;
+  ctx.fillStyle = C.edge; ctx.strokeStyle = C.edge; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  if(kind === "diamond"){
+    ctx.moveTo(cx, cy-r); ctx.lineTo(cx+r*0.72, cy); ctx.lineTo(cx, cy+r); ctx.lineTo(cx-r*0.72, cy);
+    ctx.closePath(); ctx.fill();
+  } else if(kind === "circle"){
+    ctx.arc(cx, cy, r*0.82, 0, Math.PI*2); ctx.fill();
+  } else if(kind === "star"){
+    for(let i=0;i<10;i++){
+      const a = -Math.PI/2 + i*Math.PI/5, rr = i%2 ? r*0.42 : r;
+      const x = cx + rr*Math.cos(a), y = cy + rr*Math.sin(a);
+      i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+    }
+    ctx.closePath(); ctx.fill();
+  } else {
+    ctx.font = '700 ' + Math.round(r*1.7) + 'px "IBM Plex Mono", monospace';
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(kind, cx, cy);
+  }
+  ctx.restore();
+}
+
+/* ==================== 場景：展開圖 ==================== */
+const D90 = Math.PI/2;
+
+function cubeNetScene(cells, marks, tones){
+  const faces = cellsToFaces(cells, marks, tones);
+  // 向後摺：基準面留在最靠近觀察者的一側，圖案才看得見
+  return { kind:"fold", polys: t => foldFaces(faces, t, -1) };
+}
+
+function prismScene(variant){
+  const a = 1, h = 1.75, hh = Math.sqrt(3)/2*a;
+  const onEdge = (e1,e2,away,len) => {
+    const dx = e2[0]-e1[0], dy = e2[1]-e1[1], L = Math.hypot(dx,dy);
+    let nx = -dy/L, ny = dx/L;
+    if((away[0]-e1[0])*nx + (away[1]-e1[1])*ny > 0){ nx = -nx; ny = -ny; }
+    return [e1, e2, [e2[0]+len*nx, e2[1]+len*ny], [e1[0]+len*nx, e1[1]+len*ny]];
+  };
+  const faces = [{pts:[[0,0],[h,0],[h,a],[0,a]], parent:null}];
+  const TL = {pts:[[0,0],[0,a],[-hh,a/2]], parent:0, hinge:[[0,0],[0,a]], angle:D90};
+  const TR = {pts:[[h,0],[h,a],[h+hh,a/2]], parent:0, hinge:[[h,0],[h,a]], angle:D90};
+  if(variant === "D"){
+    faces.push({pts:[[0,-a],[h,-a],[h,0],[0,0]], parent:0, hinge:[[0,0],[h,0]], angle:Math.PI*2/3});
+    faces.push(TL); faces.push(TR);
+    faces.push({pts:onEdge([h,0],[h+hh,a/2],[h,a],h), parent:3, hinge:[[h,0],[h+hh,a/2]], angle:D90});
+    faces[1].tone = "warn"; faces[4].tone = "warn";
+  }else{
+    faces.push(TL); faces.push(TR);
+    faces.push({pts:onEdge([0,a],[-hh,a/2],[0,0],h), parent:1, hinge:[[0,a],[-hh,a/2]], angle:D90});
+    if(variant === "C") faces.push({pts:onEdge([h,0],[h+hh,a/2],[h,a],h), parent:2, hinge:[[h,0],[h+hh,a/2]], angle:D90});
+    else                faces.push({pts:onEdge([h,a],[h+hh,a/2],[h,0],h), parent:2, hinge:[[h,a],[h+hh,a/2]], angle:D90});
+    if(variant === "B"){ faces[3].tone = "warn"; faces[4].tone = "warn"; }
+  }
+  // 摺好之後棱柱的軸沿 x 方向，鏡頭少轉一點才不會正對著軸看
+  return { kind:"fold", polys: t => foldFaces(faces, t, -1), camEnd:[-0.55, -0.34] };
+}
+
+function cylinderNetScene(capA, capB){
+  const r = 0.62, H = 1.85, W = 2*Math.PI*r, N = 44, M = 44;
+  const cA = ((capA === undefined ? 0.5 : capA) - 0.5) * W;
+  const cB = ((capB === undefined ? 0.5 : capB) - 0.5) * W;
+  const bend = (x,y,t) => {
+    if(t < 1e-4) return [x - W/2, y, 0];
+    const R = W/(2*Math.PI*t), phi = (x - W/2)/R;
+    return [R*Math.sin(phi), y, R*(1-Math.cos(phi))];
+  };
+  const capPts = (yHinge, sign) => {
+    const arr = [];
+    for(let i=0;i<M;i++){
+      const th = i/M*2*Math.PI;
+      arr.push([r*Math.cos(th), yHinge + sign*r + r*Math.sin(th)]);
+    }
+    return arr;
+  };
+  const polys = t => {
+    const out = [];
+    for(let i=0;i<N;i++){
+      const x0 = W*i/N, x1 = W*(i+1)/N;
+      out.push({mesh:true, pts3:[bend(x0,0,t), bend(x1,0,t), bend(x1,H,t), bend(x0,H,t)]});
+    }
+    const th = D90*t;
+    const capAt = (pts, yHinge, sgn, c0) => pts.map(p => {
+      const v = p[1] - yHinge;
+      return [p[0] + c0*(1-t), yHinge + v*Math.cos(th), sgn*v*Math.sin(th)];
+    });
+    out.push({pts3: capAt(capPts(0,-1), 0, -1, cA)});
+    out.push({pts3: capAt(capPts(H, 1), H,  1, cB)});
+    return out;
+  };
+  return { kind:"fold", polys };
+}
+
+function coneNetScene(){
+  const L = 1.85, r = 0.62, TH = 2*Math.PI*r/L, N = 46, M = 46;
+  const sbOf = t => 1 - t*(1 - TH/(2*Math.PI));
+  const wrap = (rho, al, t) => {
+    const sb = sbOf(t), cb = Math.sqrt(Math.max(0, 1-sb*sb));
+    const phi = (al - TH/2)/sb + Math.PI/2;
+    return [rho*sb*Math.cos(phi), rho*sb*Math.sin(phi), rho*cb];
+  };
+  const stand = (p,t) => {
+    const a = -D90*t, c = Math.cos(a), s = Math.sin(a);
+    return [p[0], p[1]*c - p[2]*s, p[1]*s + p[2]*c];
+  };
+  const polys = t => {
+    const out = [];
+    for(let i=0;i<N;i++){
+      const a0 = TH*i/N, a1 = TH*(i+1)/N;
+      for(let k=0;k<2;k++){
+        const r0 = L*k/2, r1 = L*(k+1)/2;
+        out.push({mesh:true, pts3:[ stand(wrap(r0,a0,t),t), stand(wrap(r1,a0,t),t),
+                                    stand(wrap(r1,a1,t),t), stand(wrap(r0,a1,t),t) ]});
+      }
+    }
+    // 底圓：繞著弧上的切線翻過去，起點與終點都精準
+    const sb = sbOf(t), cb = Math.sqrt(Math.max(0, 1-sb*sb));
+    const P = [0, L*sb, L*cb];
+    const psi = Math.PI*t, cp = Math.cos(psi), sp = Math.sin(psi);
+    const disc = [];
+    for(let i=0;i<M;i++){
+      const th = i/M*2*Math.PI;
+      const u = r*Math.cos(th), v = r + r*Math.sin(th);
+      disc.push(stand([P[0]+u, P[1]+v*cp, P[2]+v*sp], t));
+    }
+    out.push({pts3:disc});
+    return out;
+  };
+  return { kind:"fold", polys };
+}
+
+/* Q13 選項 C：三個長方形 + 一個三角形，摺不成 */
+function q13cScene(){
+  const a = 1.1, h = 1.5, hh = Math.sqrt(3)/2*a;
+  const F = [
+    {pts:[[0,0],[a,0],[a,h],[0,h]], parent:null},
+    {pts:[[a,0],[2*a,0],[2*a,h],[a,h]], parent:0, hinge:[[a,0],[a,h]], angle:Math.PI*2/3},
+    {pts:[[-a,0],[0,0],[0,h],[-a,h]], parent:0, hinge:[[0,0],[0,h]], angle:Math.PI*2/3},
+    {pts:[[0,h],[a,h],[a/2, h+hh]], parent:0, hinge:[[0,h],[a,h]], angle:Math.PI/2}
+  ];
+  // 鏡頭由上向下望多一點，一眼就見到頂部是空的
+  return { kind:"fold", polys: t => foldFaces(F, t, -1), camEnd:[-0.78,-0.42] };
+}
+
+/* Q15 那個三棱柱展開圖：三個長方形一排，中間那個上下各接一個三角形 */
+function prismNetStd(){
+  const a = 1.35, h = 1.7, hh = Math.sqrt(3)/2*a;
+  const F = [
+    {pts:[[0,0],[a,0],[a,h],[0,h]], parent:null},
+    {pts:[[a,0],[2*a,0],[2*a,h],[a,h]], parent:0, hinge:[[a,0],[a,h]], angle:Math.PI*2/3},
+    {pts:[[-a,0],[0,0],[0,h],[-a,h]], parent:0, hinge:[[0,0],[0,h]], angle:Math.PI*2/3},
+    {pts:[[0,0],[a,0],[a/2,-hh]], parent:0, hinge:[[0,0],[a,0]], angle:Math.PI/2},
+    {pts:[[0,h],[a,h],[a/2,h+hh]], parent:0, hinge:[[0,h],[a,h]], angle:Math.PI/2}
+  ];
+  return { kind:"fold", polys: t => foldFaces(F, t, -1), camEnd:[-0.46,-0.55] };
+}
+
+function openBoxScene(){
+  const F = [];
+  F.push({pts:[[5,2],[10,2],[10,7],[5,7]], parent:null});
+  F.push({pts:[[5,0],[10,0],[10,2],[5,2]],   parent:0, hinge:[[5,2],[10,2]], angle:D90});
+  F.push({pts:[[10,2],[12,2],[12,7],[10,7]], parent:0, hinge:[[10,2],[10,7]], angle:D90});
+  F.push({pts:[[5,7],[10,7],[10,9],[5,9]],   parent:0, hinge:[[5,7],[10,7]], angle:D90});
+  F.push({pts:[[0,7],[5,7],[5,9],[0,9]],     parent:3, hinge:[[5,7],[5,9]], angle:D90});
+  const OUTLINE = [[5,0],[10,0],[10,2],[12,2],[12,7],[10,7],[10,9],[0,9],[0,7],[5,7],[5,2]];
+  return {
+    kind:"fold",
+    polys: t => (!state.foldLines && t < 0.02)
+      ? [{pts3: OUTLINE.map(q => [q[0],q[1],0])}]
+      : foldFaces(F, t),
+    anns: () => {
+      const a = [
+        {p1:[0,9.9,0],  p2:[10,9.9,0], text:"10 cm"},
+        {p1:[13.1,0,0], p2:[13.1,2,0], text:"2 cm"}
+      ];
+      if(state.foldLines) a.push({p1:[13.1,2,0], p2:[13.1,7,0], text:"5 cm"});
+      return a;
+    }
+  };
+}
+
+/* 由面的資料推出棱（相鄰面的公共邊）與頂點 */
+function keyOf(v){ return v.map(x => Math.round(x*1000)).join(","); }
+function edgesOf(polys){
+  const m = new Map();
+  polys.forEach(p => {
+    if(p.mesh || p.outline) return;
+    const n = p.pts3.length;
+    for(let i=0;i<n;i++){
+      const a = p.pts3[i], b = p.pts3[(i+1)%n];
+      const ka = keyOf(a), kb = keyOf(b);
+      const k = ka < kb ? ka + "|" + kb : kb + "|" + ka;
+      if(!m.has(k)) m.set(k, [a,b]);
+    }
+  });
+  return Array.from(m.values());
+}
+function vertsOf(polys){
+  const m = new Map();
+  polys.forEach(p => { if(p.mesh || p.outline) return; p.pts3.forEach(v => m.set(keyOf(v), v)); });
+  return Array.from(m.values());
+}
+
+/* 正 n 棱柱：軸沿 y，一條側棱朝向正面 */
+function polyPrism(n, R, yT, yB){
+  const V = [];
+  for(let i=0;i<n;i++){ const a = Math.PI/2 + i*2*Math.PI/n; V.push([R*Math.cos(a), 0, R*Math.sin(a)]); }
+  const out = [];
+  for(let i=0;i<n;i++){
+    const a = V[i], b = V[(i+1)%n];
+    const mid = [(a[0]+b[0])/2, 0, (a[2]+b[2])/2];
+    out.push({pts3: orient([[a[0],yT,a[2]],[b[0],yT,b[2]],[b[0],yB,b[2]],[a[0],yB,a[2]]], mid)});
+  }
+  out.push({pts3: orient(V.map(v => [v[0],yT,v[2]]), [0,-1,0])});
+  out.push({pts3: orient(V.map(v => [v[0],yB,v[2]]), [0,1,0])});
+  return out;
+}
+
+/* 球（經緯網格） */
+function sphereSolid(R, NU, NV){
+  const out = [];
+  const P = (u,v) => [R*Math.sin(v)*Math.cos(u), -R*Math.cos(v), R*Math.sin(v)*Math.sin(u)];
+  for(let i=0;i<NU;i++) for(let j=0;j<NV;j++){
+    const u0 = i/NU*2*Math.PI, u1 = (i+1)/NU*2*Math.PI;
+    const v0 = j/NV*Math.PI,   v1 = (j+1)/NV*Math.PI;
+    const q = [P(u0,v0),P(u1,v0),P(u1,v1),P(u0,v1)];
+    const mid = P((u0+u1)/2,(v0+v1)/2);
+    out.push({mesh:true, pts3: orient(q, mid)});
+  }
+  return out;
+}
+
+/* ==================== 場景：從不同方向看 ==================== */
+function solidScene(polys, views){
+  return { kind:"view", polys: () => polys, views: views || ["iso","front","left","top"], dashHidden:true };
+}
+
+function cubesScene(heights){
+  const s = solidScene(cubesSolid(heights));
+  s.heights = heights;
+  return s;
+}
+
+/* Q8：圓柱上面壓一條長方體 */
+function q8Scene(){
+  // 扁圓柱，上面再疊一條「弓形塊」：兩端跟圓周同一段弧，厚度同圓柱一樣
+  const R = 1.05, H = 0.60, w = 0.34, N = 44;
+  const yB = 0.30, yM = yB - H, yT = yM - H;
+  const p = cylinderY(0, 0, R, yM, yB, N);
+  const al = Math.asin(w/R), M = 18;
+  const sec = [];
+  for(let i=0;i<=M;i++){ const a = Math.PI/2 - al + 2*al*i/M; sec.push([R*Math.cos(a), R*Math.sin(a)]); }
+  for(let i=0;i<=M;i++){ const a = -Math.PI/2 - al + 2*al*i/M; sec.push([R*Math.cos(a), R*Math.sin(a)]); }
+  const P = (q,y) => [q[0], y, q[1]];
+  p.push({pts3: orient(sec.map(q => P(q,yT)), [0,-1,0])});
+  p.push({pts3: orient(sec.map(q => P(q,yM)), [0,1,0])});
+  for(let i=0;i<sec.length;i++){
+    const a = sec[i], b = sec[(i+1)%sec.length];
+    const mid = [(a[0]+b[0])/2, 0, (a[1]+b[1])/2];
+    const straight = Math.abs(Math.abs(a[0]) - w) < 1e-6 && Math.abs(Math.abs(b[0]) - w) < 1e-6;
+    p.push({mesh: !straight, pts3: orient([P(a,yT),P(b,yT),P(b,yM),P(a,yM)], mid)});
+  }
+  return solidScene(p);
+}
+
+/* Q9：正方體截去靠正面的一角 */
+function q9Scene(){
+  const x0=-0.9, x1=0.9, yT=-0.9, yB=0.9, zF=0.9, zK=-0.9, k=0.5;
+  // 被削走的角在「右、上、前」；截面通過三條棱上的 P1、P2、P3
+  const P1 = [x1 - k*(x1-x0), yT, zF];   // 沿頂前棱向左
+  const P2 = [x1, yT + k*(yB-yT), zF];   // 沿右前棱向下
+  const P3 = [x1, yT, zF + k*(zK-zF)];   // 沿右頂棱向後
+  const out = [];
+  out.push({pts3: orient([P1,P2,[x1,yB,zF],[x0,yB,zF],[x0,yT,zF]], [0,0,1])});          // 正面
+  out.push({pts3: orient([P2,P3,[x1,yT,zK],[x1,yB,zK],[x1,yB,zF]], [1,0,0])});          // 右面
+  out.push({pts3: orient([P1,P3,[x1,yT,zK],[x0,yT,zK],[x0,yT,zF]], [0,-1,0])});         // 頂面
+  out.push({pts3: orient([[x0,yT,zF],[x0,yT,zK],[x0,yB,zK],[x0,yB,zF]], [-1,0,0])});    // 左面
+  out.push({pts3: orient([[x0,yT,zK],[x1,yT,zK],[x1,yB,zK],[x0,yB,zK]], [0,0,-1])});    // 後面
+  out.push({pts3: orient([[x0,yB,zF],[x1,yB,zF],[x1,yB,zK],[x0,yB,zK]], [0,1,0])});     // 底面
+  const cm = [(P1[0]+P2[0]+P3[0])/3, (P1[1]+P2[1]+P3[1])/3, (P1[2]+P2[2]+P3[2])/3];
+  out.push({pts3: orient([P1,P2,P3], cm), tone:"warn"});                                 // 截面
+  return solidScene(out);
+}
+
+/* Q16：豎放的三棱柱，一條側棱朝正面 */
+function q16Scene(){
+  const R = 1.0, yT = -1.05, yB = 1.05;
+  const ang = [Math.PI/2, Math.PI/2 + 2*Math.PI/3, Math.PI/2 + 4*Math.PI/3];
+  const V = ang.map(a => [R*Math.cos(a), 0, R*Math.sin(a)]);
+  const out = [];
+  for(let i=0;i<3;i++){
+    const a = V[i], b = V[(i+1)%3];
+    const mid = [(a[0]+b[0])/2, 0, (a[2]+b[2])/2];
+    out.push({pts3: orient([[a[0],yT,a[2]],[b[0],yT,b[2]],[b[0],yB,b[2]],[a[0],yB,a[2]]], mid)});
+  }
+  out.push({pts3: orient(V.map(v => [v[0],yT,v[2]]), [0,-1,0])});
+  out.push({pts3: orient(V.map(v => [v[0],yB,v[2]]), [0,1,0])});
+  return solidScene(out);
+}
+
+/* Q17：長方體上加半個圓柱，中間一個圓孔 */
+function q17Scene(){
+  const w = 0.95, d = 0.55, yMid = 0.05, yBot = 1.15, N = 30, NH = 36;
+  const rh = 0.40, yh = yMid - 0.34;            // 圓孔半徑同圓心高度
+  const out = [];
+  // 拱形外框（下面長方形 + 上面半圓），前後兩塊，中間開一個圓孔
+  const arch = [];
+  arch.push([-w, yBot]); arch.push([w, yBot]);
+  for(let i=0;i<=N;i++){ const a = -Math.PI*i/N; arch.push([w*Math.cos(a), yMid + w*Math.sin(a)]); }
+  const holeRing = z => {
+    const r = [];
+    for(let i=0;i<NH;i++){ const a = i/NH*2*Math.PI; r.push([rh*Math.cos(a), yh + rh*Math.sin(a), z]); }
+    return r;
+  };
+  out.push({pts3: orient(arch.map(q => [q[0],q[1], d]), [0,0,1]),  hole: holeRing(d)});
+  out.push({pts3: orient(arch.map(q => [q[0],q[1],-d]), [0,0,-1]), hole: holeRing(-d)});
+  // 圓孔內壁（法線向內，所以看得到孔的裡面）
+  for(let i=0;i<NH;i++){
+    const a0 = i/NH*2*Math.PI, a1 = (i+1)/NH*2*Math.PI;
+    const P = (a,z) => [rh*Math.cos(a), yh + rh*Math.sin(a), z];
+    const inward = [-Math.cos((a0+a1)/2), -Math.sin((a0+a1)/2), 0];
+    out.push({mesh:true, pts3: orient([P(a0,d),P(a1,d),P(a1,-d),P(a0,-d)], inward)});
+  }
+  // 外殼：底面、左右兩塊直身、上面半圓弧帶
+  out.push({pts3: orient([[-w,yBot,d],[w,yBot,d],[w,yBot,-d],[-w,yBot,-d]], [0,1,0])});
+  out.push({pts3: orient([[-w,yMid,d],[-w,yBot,d],[-w,yBot,-d],[-w,yMid,-d]], [-1,0,0])});
+  out.push({pts3: orient([[ w,yMid,d],[ w,yBot,d],[ w,yBot,-d],[ w,yMid,-d]], [1,0,0])});
+  for(let i=0;i<N;i++){
+    const a0 = -Math.PI*i/N, a1 = -Math.PI*(i+1)/N;
+    const P = (a,z) => [w*Math.cos(a), yMid + w*Math.sin(a), z];
+    const mid = [Math.cos((a0+a1)/2), Math.sin((a0+a1)/2), 0];
+    out.push({mesh:true, pts3: orient([P(a0,d),P(a1,d),P(a1,-d),P(a0,-d)], mid)});
+  }
+  return solidScene(out);
+}
+
+/* Q18：茶壺（壺身、壺嘴、壺柄） */
+function q18Scene(){
+  // 壺身：不畫底面，避免深度排序時底圓穿到壺身前面（所有視角都看不到壺底）
+  const out = cylinderY(0,0, 0.62, -0.62, 0.62, 40, 0, Math.PI*2, false);
+  const topRing = [];
+  for(let i=0;i<40;i++){ const a = i/40*2*Math.PI; topRing.push([0.62*Math.cos(a), -0.62, 0.62*Math.sin(a)]); }
+  out.push({pts3: orient(topRing, [0,-1,0])});
+  out.push.apply(out, cylinderY(0,0, 0.20, -0.80, -0.62, 24));       // 壺蓋鈕
+  // 壺嘴：向 +x 斜上伸出
+  const seg = 8;
+  for(let i=0;i<seg;i++){
+    const t0 = i/seg, t1 = (i+1)/seg;
+    const P = t => [0.55 + 0.75*t, -0.05 - 0.62*t*t, 0];
+    const R = t => 0.17 - 0.07*t;
+    const A = P(t0), B = P(t1), ra = R(t0), rb = R(t1), N = 16;
+    for(let k=0;k<N;k++){
+      const a0 = k/N*2*Math.PI, a1 = (k+1)/N*2*Math.PI;
+      const q = (Pp,rr,a) => [Pp[0], Pp[1] + rr*Math.cos(a), Pp[2] + rr*Math.sin(a)];
+      const mid = [0, Math.cos((a0+a1)/2), Math.sin((a0+a1)/2)];
+      out.push({mesh:true, tone:"hl1", pts3: orient([q(A,ra,a0), q(A,ra,a1), q(B,rb,a1), q(B,rb,a0)], mid)});
+    }
+  }
+  // 壺柄：xy 平面上的扁環
+  const N2 = 40, RO = 0.46, RI = 0.30, cxh = -0.95, cyh = 0;
+  for(let i=0;i<N2;i++){
+    const a0 = i/N2*2*Math.PI, a1 = (i+1)/N2*2*Math.PI;
+    const P = (a,r,z) => [cxh + r*Math.cos(a), cyh + r*Math.sin(a), z];
+    [0.05, -0.05].forEach(z => {
+      out.push({mesh:true, tone:"hl2", pts3: orient([P(a0,RI,z),P(a0,RO,z),P(a1,RO,z),P(a1,RI,z)], [0,0,z>0?1:-1])});
+    });
+    out.push({mesh:true, tone:"hl2", pts3: orient([P(a0,RO,0.05),P(a1,RO,0.05),P(a1,RO,-0.05),P(a0,RO,-0.05)],
+      [Math.cos((a0+a1)/2), Math.sin((a0+a1)/2), 0])});
+    out.push({mesh:true, tone:"hl2", pts3: orient([P(a0,RI,0.05),P(a1,RI,0.05),P(a1,RI,-0.05),P(a0,RI,-0.05)],
+      [-Math.cos((a0+a1)/2), -Math.sin((a0+a1)/2), 0])});
+  }
+  const s = solidScene(out, ["iso","front","left","right","top"]);
+  return s;
+}
+
+/* ==================== 6.1.2 點、線、面、體 ==================== */
+const SOLIDS = {
+  cuboid: {name:"長方體", make:() => box(-1.0,1.0, -0.7,0.7, 0.62,-0.62),
+           info:"6 個面、12 條棱、8 個頂點。每個面都是長方形，每個頂點都有 3 條棱。"},
+  prism3: {name:"三棱柱", make:() => polyPrism(3, 1.0, -0.95, 0.95),
+           info:"5 個面（2 個底面 + 3 個側面）、9 條棱、6 個頂點。"},
+  prism5: {name:"五棱柱", make:() => polyPrism(5, 0.95, -0.9, 0.9),
+           info:"7 個面（2 個底面 + 5 個側面）、15 條棱、10 個頂點。"},
+  pyr4:   {name:"四棱錐", make:() => {
+             const R = 1.0, yB = 0.8, yT = -0.95, V = [];
+             for(let i=0;i<4;i++){ const a = Math.PI/4 + i*Math.PI/2; V.push([R*Math.cos(a), yB, R*Math.sin(a)]); }
+             const apex = [0,yT,0], out = [];
+             for(let i=0;i<4;i++){
+               const a = V[i], b = V[(i+1)%4];
+               out.push({pts3: orient([a,b,apex], [(a[0]+b[0])/2, 0, (a[2]+b[2])/2])});
+             }
+             out.push({pts3: orient(V.slice(), [0,1,0])});
+             return out;
+           },
+           info:"5 個面（1 個底面 + 4 個側面）、8 條棱、5 個頂點。"},
+  cyl:    {name:"圓柱", curved:true, make:() => cylinderY(0,0, 0.85, -0.95, 0.95, 44),
+           info:"3 個面：2 個平面（上下底）和 1 個曲面（側面）。面與面相交成 2 條曲線，沒有頂點。"},
+  cone:   {name:"圓錐", curved:true, make:() => {
+             const R = 0.95, yB = 0.85, yT = -0.95, N = 44, out = [];
+             const P = a => [R*Math.cos(a), yB, R*Math.sin(a)];
+             for(let i=0;i<N;i++){
+               const a0 = i/N*2*Math.PI, a1 = (i+1)/N*2*Math.PI;
+               const mid = [Math.cos((a0+a1)/2), 0, Math.sin((a0+a1)/2)];
+               out.push({mesh:true, pts3: orient([P(a0),P(a1),[0,yT,0]], mid)});
+             }
+             const ring = []; for(let i=0;i<N;i++) ring.push(P(i/N*2*Math.PI));
+             out.push({pts3: orient(ring, [0,1,0])});
+             return out;
+           },
+           info:"2 個面：1 個平面（底面）和 1 個曲面（側面）。相交成 1 條曲線，錐頂是 1 個頂點。"},
+  ball:   {name:"球", curved:true, make:() => sphereSolid(1.0, 40, 20),
+           info:"只有 1 個曲面，沒有棱，也沒有頂點。"}
+};
+function solid612Scene(key, mode){
+  const d = SOLIDS[key], polys = d.make();
+  return { kind:"view", polys: () => polys, views:["iso","front","top"], dashHidden:true,
+           mode: d.curved ? null : mode, curved: d.curved, info:d.info, solidName:d.name };
+}
+
+/* 點動成線、線動成面、面動成體 */
+function sweepScene(){
+  const L = 1.6, W = 1.3, H = 1.1;
+  const polys = t => {
+    const out = [];
+    const a = Math.min(1, t/0.33), b = Math.min(1, Math.max(0, (t-0.33)/0.33)), c = Math.min(1, Math.max(0, (t-0.66)/0.34));
+    const x1 = -L/2 + L*a, y1 = -W/2 + W*b, z1 = -H/2 + H*c;
+    if(c > 0.001){
+      out.push.apply(out, box(-L/2, x1, -W/2, y1, z1, -H/2));
+    } else if(b > 0.001){
+      out.push({pts3:[[-L/2,-W/2,-H/2],[x1,-W/2,-H/2],[x1,y1,-H/2],[-L/2,y1,-H/2]], tone:"p1"});
+    } else {
+      out.push({pts3:[[-L/2,-W/2,-H/2],[x1,-W/2,-H/2]], outline:true});
+    }
+    // 起點：那一點
+    const r = 0.055;
+    const dot = [];
+    for(let i=0;i<16;i++){ const q = i/16*2*Math.PI; dot.push([-L/2 + r*Math.cos(q), -W/2 + r*Math.sin(q), -H/2]); }
+    out.push({pts3:dot, tone:"warn"});
+    return out;
+  };
+  return { kind:"fold", polys, camEnd:[-0.42,-0.58],
+           readout:{cap:"掃過的過程", value: t => Math.round(t*100), unit:"%"} };
+}
+
+/* 面動成體：平面圖形繞軸旋轉一周 */
+const SPINS = {
+  rect: {name:"長方形", res:"圓柱", prof:[[0,-0.95],[0.72,-0.95],[0.72,0.95],[0,0.95]]},
+  tri:  {name:"直角三角形", res:"圓錐", prof:[[0,-1.0],[0.85,0.9],[0,0.9]]},
+  semi: {name:"半圓", res:"球", prof:(function(){ const a=[]; for(let i=0;i<=24;i++){ const th=-Math.PI/2+i/24*Math.PI; a.push([1.0*Math.cos(th), 1.0*Math.sin(th)]); } return a; })()},
+  trap: {name:"梯形", res:"圓台", prof:[[0,-0.9],[0.42,-0.9],[0.85,0.9],[0,0.9]]}
+};
+function spinScene(key){
+  const d = SPINS[key], prof = d.prof, NA = 60;
+  const polys = t => {
+    const out = [];
+    const total = 2*Math.PI*t, steps = Math.max(1, Math.round(NA*t));
+    const P = (pt, a) => [pt[0]*Math.cos(a), pt[1], pt[0]*Math.sin(a)];
+    for(let i=0;i<steps;i++){
+      const a0 = total*i/steps, a1 = total*(i+1)/steps;
+      for(let j=0;j<prof.length-1;j++){
+        const u = prof[j], v = prof[j+1];
+        if(Math.abs(u[0]) < 1e-6 && Math.abs(v[0]) < 1e-6) continue;
+        const q = [P(u,a0), P(v,a0), P(v,a1), P(u,a1)];
+        const mid = [Math.cos((a0+a1)/2), 0, Math.sin((a0+a1)/2)];
+        out.push({mesh:true, pts3: orient(q, mid)});
+      }
+    }
+    // 起始的平面圖形本身
+    out.push({pts3: prof.map(pt => [pt[0], pt[1], 0]).concat([[0, prof[prof.length-1][1], 0]]), tone:"warn"});
+    // 旋轉軸
+    out.push({pts3:[[0,-1.35,0],[0,1.35,0]], outline:true});
+    return out;
+  };
+  return { kind:"fold", polys, camEnd:[-0.34,-0.5],
+           readout:{cap:"旋轉角度", value: t => Math.round(t*360), unit:"°"} };
+}
+
+/* 用一個平面豎直去截圓柱 */
+function cutScene(){
+  const R = 0.95, yT = -1.0, yB = 1.0, N = 44;
+  const polys = t => {
+    const z0 = -R*0.92 + 2*R*0.92*t;
+    const out = cylinderY(0,0, R, yT, yB, N);
+    const half = Math.sqrt(Math.max(0, R*R - z0*z0));
+    out.push({pts3:[[-R*1.5,yT-0.25,z0],[R*1.5,yT-0.25,z0],[R*1.5,yB+0.25,z0],[-R*1.5,yB+0.25,z0]], outline:true, top:true});
+    out.push({pts3:[[-half,yT,z0],[half,yT,z0],[half,yB,z0],[-half,yB,z0]], tone:"warn", top:true});
+    return out;
+  };
+  return { kind:"fold", polys, camEnd:[-0.4,-0.62],
+           readout:{cap:"截面位置", value: t => Math.round(t*100), unit:"%"} };
+}
+
+/* ==================== 十一種展開圖 ==================== */
+const NETS = {
+  "一四一": [
+    [[0,1],[1,1],[2,1],[3,0],[3,1],[3,2]],
+    [[0,1],[1,1],[2,0],[2,1],[3,1],[3,2]],
+    [[0,1],[1,0],[1,1],[2,1],[3,1],[3,2]],
+    [[0,0],[0,1],[1,1],[2,1],[3,1],[3,2]],
+    [[0,1],[1,1],[2,0],[2,1],[2,2],[3,1]],
+    [[0,1],[1,1],[1,2],[2,0],[2,1],[3,1]]
+  ],
+  "二三一": [
+    [[0,0],[1,0],[1,1],[1,2],[2,1],[3,1]],
+    [[0,0],[1,0],[1,1],[2,1],[2,2],[3,1]],
+    [[0,0],[1,0],[1,1],[2,1],[3,1],[3,2]]
+  ],
+  "二二二": [ [[0,2],[1,1],[1,2],[2,0],[2,1],[3,0]] ],
+  "三三":   [ [[0,1],[1,1],[2,0],[2,1],[3,0],[4,0]] ]
+};
+const CROSS = [[1,0],[0,1],[1,1],[2,1],[1,2],[1,3]];
+const Q19_MARKS = {
+  A: {"1,0":"diamond", "1,1":"star", "2,1":"circle"},
+  B: {"1,0":"diamond", "1,1":"star", "1,2":"circle"},
+  C: {"0,1":"diamond", "1,1":"star", "1,2":"circle"},
+  D: {"0,1":"diamond", "1,1":"star", "2,1":"circle"}
+};
+
+function netThumb(cells, s){
+  const w = Math.max.apply(null, cells.map(c => c[0])) + 1;
+  const h = Math.max.apply(null, cells.map(c => c[1])) + 1;
+  let r = '<svg width="' + (w*s+2) + '" height="' + (h*s+2) + '" viewBox="0 0 ' + (w*s+2) + ' ' + (h*s+2) + '">';
+  cells.forEach(c => {
+    r += '<rect x="' + (c[0]*s+1) + '" y="' + (c[1]*s+1) + '" width="' + s + '" height="' + s +
+         '" fill="var(--face)" stroke="var(--edge)" stroke-width="1"/>';
+  });
+  return r + "</svg>";
+}
+function colGrid(heights){
+  const s = 15, H = Math.max.apply(null, heights);
+  let r = '<svg width="' + (heights.length*s+2) + '" height="' + (H*s+2) + '">';
+  heights.forEach((v,i) => {
+    for(let k=0;k<v;k++){
+      r += '<rect x="' + (i*s+1) + '" y="' + ((H-1-k)*s+1) + '" width="' + s + '" height="' + s +
+           '" fill="var(--face)" stroke="var(--edge)" stroke-width="1"/>';
+    }
+  });
+  return r + "</svg>";
+}
+function matGrid(mat){
+  const s = 15, R = mat.length, Cn = mat[0].length;
+  let r = '<svg width="' + (Cn*s+2) + '" height="' + (R*s+2) + '">';
+  for(let y=0;y<R;y++) for(let x=0;x<Cn;x++){
+    if(mat[y][x]) r += '<rect x="' + (x*s+1) + '" y="' + (y*s+1) + '" width="' + s + '" height="' + s +
+                       '" fill="var(--face)" stroke="var(--edge)" stroke-width="1"/>';
+  }
+  return r + "</svg>";
+}
+
+/* ==================== 各題內容 ==================== */
+const state = { netKey:"一四一", netIdx:0, pairs:false, q19:"A", prism:"C", round:"cyl",
+                q15:"cone", build:[[2,1],[1,2],[2,2],[3,2],[2,3],[2,4]], showViews:false,
+                solid:"cuboid", part:null, spin:"rect", q13:"A", foldLines:false };
+
+const Q10_H = [[1,1,2],[0,0,1]];
+const Q11_H = [[0,1,0],[1,2,1]];
+const Q12_H = [[0,1,0,0],[0,1,0,0],[1,3,1,1]];
+
+const TABS = [
+  {id:"q8",  q:"Q8",  t:"圓柱與長方體"},
+  {id:"q9",  q:"Q9",  t:"截去一角"},
+  {id:"q10", q:"Q10", t:"五個正方體"},
+  {id:"q11", q:"Q11", t:"五個正方體"},
+  {id:"q12", q:"Q12", t:"八個正方體"},
+  {id:"q13", q:"Q13", t:"圓柱・圓錐"},
+  {id:"q14", q:"Q14", t:"三棱柱"},
+  {id:"q15", q:"Q15", t:"四個展開圖"},
+  {id:"q16", q:"Q16", t:"由三視圖判斷"},
+  {id:"q17", q:"Q17", t:"機器零件"},
+  {id:"q18", q:"Q18", t:"茶壺"},
+  {id:"q19", q:"Q19", t:"三個圖案"},
+  {id:"q20", q:"Q20", t:"無蓋盒子"},
+  {sep:true},
+  {id:"nets",  q:"工具", t:"十一種展開圖"},
+  {id:"build", q:"工具", t:"六格試摺"},
+  {sep:true},
+  {id:"parts", q:"6.1.2", t:"面・棱・頂點"},
+  {id:"sweep", q:"6.1.2", t:"點動成線"},
+  {id:"spin",  q:"6.1.2", t:"面動成體"},
+  {id:"cut",   q:"6.1.2", t:"截面"}
+];
+let tab = "q8";
+
+const nav = document.getElementById("tabs");
+nav.innerHTML = TABS.map(x => x.sep ? '<span class="sep"></span>' :
+  '<button role="tab" data-id="' + x.id + '" aria-selected="' + (x.id === tab) + '">' +
+  '<span class="q">' + x.q + '</span><span class="t">' + x.t + '</span></button>').join("");
+nav.addEventListener("click", e => {
+  const b = e.target.closest("button[data-id]");
+  if(!b) return;
+  tab = b.dataset.id;
+  Array.prototype.forEach.call(nav.querySelectorAll("button[data-id]"),
+    c => c.setAttribute("aria-selected", c.dataset.id === tab));
+  buildTab();
+});
+
+const rail = document.getElementById("rail");
+const controls = document.getElementById("controls");
+
+function panel(title, html){ return '<div class="panel"><h2>' + title + '</h2>' + html + '</div>'; }
+
+let miniQueue = [];
+function target(title, polys, caption){
+  const id = "mini" + miniQueue.length;
+  miniQueue.push({id: id, polys: polys});
+  return '<div class="panel"><h2>' + title + '</h2>' +
+         '<canvas class="mini" id="' + id + '" width="680" height="380"></canvas>' +
+         '<p class="minicap">' + caption + '</p></div>';
+}
+function coneSolidPolys(){ return SOLIDS.cone.make(); }
+function prismSolidPolys(){ return polyPrism(3, 1.0, -0.95, 0.95); }
+function paintMini(cv2, polys){
+  const g = cv2.getContext("2d"), w = cv2.width, h = cv2.height;
+  g.clearRect(0,0,w,h);
+  const M = mMul(mRotX(-0.42), mRotY(-0.58));
+  let minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
+  const cam = polys.map(p => p.pts3.map(v => {
+    const q = mApply(M, v);
+    if(q[0]<minx) minx=q[0]; if(q[0]>maxx) maxx=q[0];
+    if(q[1]<miny) miny=q[1]; if(q[1]>maxy) maxy=q[1];
+    return q;
+  }));
+  const pad = 26;
+  const sc = Math.min((w-pad*2)/Math.max(maxx-minx,1e-3), (h-pad*2)/Math.max(maxy-miny,1e-3));
+  const ox = w/2 - (minx+maxx)/2*sc, oy = h/2 - (miny+maxy)/2*sc;
+  const drawn = cam.map((cp,i) => {
+    const pts = cp.map(q => [ox+q[0]*sc, oy+q[1]*sc]);
+    let z = 0; cp.forEach(v => z += v[2]); z /= cp.length;
+    return {pts, z, mesh: polys[i].mesh, lit: shadeOf(unitNormal(cp))};
+  }).sort((a,b) => a.z - b.z);
+  drawn.forEach(d => {
+    const pts = d.pts, n = pts.length;
+    g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
+    for(let i=1;i<n;i++) g.lineTo(pts[i][0], pts[i][1]);
+    g.closePath();
+    g.fillStyle = shadeHex(C.face, d.lit); g.fill();
+    if(!d.mesh){ g.strokeStyle = C.edge; g.lineWidth = 2.2; g.stroke(); }
+  });
+}
+function paintMinis(){
+  miniQueue.forEach(m => {
+    const el = document.getElementById(m.id);
+    if(el) paintMini(el, m.polys);
+  });
+}
+function answer(html){ return '<details class="answer"><summary>工作紙答案</summary><div class="body">' + html + '</div></details>'; }
+function rules(list){ return list.map((s,i) => '<div class="rule"><i>' + (i+1) + '</i><span>' + s + '</span></div>').join(""); }
+function stem(text){ return panel("題目", '<p class="stem">' + text + '</p>'); }
+
+function viewsPanel(heights){
+  const v = threeViews(heights);
+  return panel("三視圖",
+    '<div class="views' + (state.showViews ? "" : " hiddenAns") + '">' +
+      '<div class="viewbox"><div class="plate">' + colGrid(v.front) + '</div><span>從正面看</span></div>' +
+      '<div class="viewbox"><div class="plate">' + colGrid(v.side) + '</div><span>從左面看</span></div>' +
+      '<div class="viewbox"><div class="plate">' + matGrid(v.top) + '</div><span>從上面看</span></div>' +
+    '</div>' +
+    '<div class="opts" style="margin-top:11px"><button data-act="views" aria-pressed="' + state.showViews + '">' +
+      (state.showViews ? "隱藏答案" : "顯示答案") + '</button></div>');
+}
+
+const VIEW_LABEL = {iso:"立體圖", front:"從正面看", left:"從左面看", right:"從右面看", top:"從上面看"};
+const VIEW_ANGLE = {iso:[-0.42,-0.58], front:[0,0], left:[0,Math.PI/2], right:[0,-Math.PI/2], top:[-Math.PI/2,0]};
+let currentView = "iso";
+
+function buildTab(){
+  miniQueue = [];
+  T = 0; currentView = "iso";
+  camBase.rx = 0; camBase.ry = 0; camOff.rx = 0; camOff.ry = 0; applyCam();
+  verdictEl.hidden = true;
+  let railHtml = "";
+
+  if(tab === "q8"){
+    scene = q8Scene();
+    noteEl.textContent = "Q8　圓柱上面壓一條長方體";
+    railHtml =
+      stem("某物體如圖所示，其從上面看到的圖形是（　　）") +
+      panel("觀察重點", rules([
+        "按「從上面看」，鏡頭會轉到物體正上方，畫面上見到的就是俯視圖。",
+        "圓柱從上面看是一個圓；上面那條長方體壓在圓的中間，投影是兩條平行線。",
+        "長方體比圓柱窄，所以兩條平行線落在圓的內部，不會超出圓周。"
+      ])) +
+      answer('<b>B</b>　圓形內有兩條平行線。');
+  }
+
+  else if(tab === "q9"){
+    scene = q9Scene();
+    noteEl.textContent = "Q9　正方體截去一角";
+    railHtml =
+      stem("如圖是一個正方體被截去一角後得到的幾何體，從上面看得到的平面圖形是（　　）") +
+      panel("觀察重點", rules([
+        "截面是一個三角形，它的三條邊分別在正面、左面和頂面上。",
+        "從上面看，正方體的外形仍然是一個正方形。",
+        "從上面看，正方形右下角有一條斜線：右邊、靠近正面的那個角。"
+      ])) +
+      answer('<b>B</b>　正方形加一條斜線，斜線落在右下角（靠右、靠正面那個角）。');
+  }
+
+  else if(tab === "q10" || tab === "q11" || tab === "q12"){
+    const H = tab === "q10" ? Q10_H : (tab === "q11" ? Q11_H : Q12_H);
+    scene = cubesScene(H);
+    const n = tab === "q12" ? "八" : "五";
+    noteEl.textContent = tab.toUpperCase() + "　" + n + "個小正方體";
+    railHtml =
+      stem(tab === "q10"
+        ? "由五個大小相同的正方體搭成的幾何體如圖所示，請在網格中畫出從正面看、從上面看、從左面看得到的平面圖形。"
+        : (tab === "q11"
+          ? "如圖是由五個小正方體堆成的幾何體，請畫出從正面、左面、上面三個方向看到的圖形。"
+          : "從正面、左面、上面三個方向觀察，分別畫出看到的平面圖形。作圖要求：先用鉛筆畫出圖形，再用黑色簽字筆描一遍，並在正方形內畫斜線表示陰影。")) +
+      panel("三步畫法", rules([
+        "先畫俯視圖：從上面看有幾格就畫幾格，在每格內寫上那一疊有幾層。",
+        "正視圖：每一直行取最大值，由左到右排列。",
+        "左視圖：每一橫排取最大值，前排放在右邊。畫完用「長對正、高平齊、寬相等」核對一次。"
+      ])) +
+      viewsPanel(H);
+  }
+
+  else if(tab === "q13"){
+    const Q13 = {
+      A: {name:"扇形 + 圓", res:"摺成圓錐", make: coneNetScene},
+      B: {name:"6 個正方形", res:"摺成正方體", make: () => cubeNetScene([[0,1],[1,1],[2,1],[3,1],[1,0],[1,2]])},
+      C: {name:"3 長方形 + 1 三角形", res:"摺不成", make: q13cScene},
+      D: {name:"長方形 + 2 個圓", res:"摺成圓柱", make: () => cylinderNetScene(0.20, 0.80)}
+    };
+    const d = Q13[state.q13];
+    scene = d.make();
+    noteEl.textContent = "Q13　選項 " + state.q13 + "　" + d.name + "　→　" + d.res;
+    railHtml =
+      target("要摺成的立體", coneSolidPolys(), "圓錐：1 個曲面 + 1 個平面，一共 2 塊") +
+      stem("下列圖形能折疊成圓錐的是（　　）") +
+      panel("四個選項", '<div class="opts">' + ["A","B","C","D"].map(k =>
+        '<button data-k="' + k + '" aria-pressed="' + (k === state.q13) + '">' + k + '</button>').join("") +
+        '</div><p style="margin-top:9px">' + state.q13 + '　' + d.name + '　→　<span class="em">' + d.res + '</span></p>') +
+      panel("判斷方法", rules([
+        "圓錐的展開圖只有兩塊：一個扇形和一個圓，<strong>扇形的弧長等於底面圓的周長</strong>。",
+        "先數塊數：圓錐 2 塊、圓柱 3 塊、正方體 6 塊。數目不對就直接剔除。",
+        "選項 C 有 3 個長方形但只有 1 個三角形。摺到最後由上向下望，會見到頂部是空的，另一個底面沒有人補。"
+      ])) +
+      answer('<b>A</b>　扇形加圓，只有這一個是兩塊。');
+  }
+
+  else if(tab === "q14"){
+    scene = prismScene(state.prism);
+    noteEl.textContent = "Q14　選項 " + state.prism;
+    railHtml =
+      target("要摺成的立體", prismSolidPolys(), "三棱柱：2 個三角形 + 3 個長方形，一共 5 塊") +
+      stem("下列圖形通過折疊能圍成一個三棱柱的是（　　）") +
+      panel("選擇項", '<div class="opts">' + ["B","C","D"].map(k =>
+        '<button data-k="' + k + '" aria-pressed="' + (k === state.prism) + '">' + k + '</button>').join("") +
+        '</div><p style="margin-top:9px">選項 A 是一個大三角形分成四個小三角形，即正四面體，沒有長方形，一開始就可以剔除。</p>') +
+      panel("關鍵", rules([
+        "三棱柱要 <strong>3 個長方形加 2 個三角形</strong>，B、C、D 的塊數都對。",
+        "三角形有三條邊，中間那個長方形已經佔了一條，<span class=\"em\">只剩兩條</span>。",
+        "左邊接一條、右邊接另一條，<strong>一上一下排成 Z 字</strong>才折得成；兩邊接同一條就會重疊。"
+      ])) +
+      answer('<b>C</b><br>B：兩塊長方形都接在三角形「下面」那條邊，折起來落在同一個位置。<br>D：上下兩塊長方形折起來同樣重疊，並且少了一個側面。');
+  }
+
+  else if(tab === "q15"){
+    const map = {
+      cone: coneNetScene,
+      cube: () => cubeNetScene([[0,1],[1,1],[2,1],[3,1],[1,0],[3,2]]),
+      prism: prismNetStd,
+      cyl: () => cylinderNetScene(0.20, 0.80)
+    };
+    scene = map[state.q15]();
+    const nameOf = {cone:"圓錐", cube:"正方體", prism:"三棱柱", cyl:"圓柱"};
+    noteEl.textContent = "Q15　" + nameOf[state.q15];
+    railHtml =
+      stem("如圖所示為幾何體的平面展開圖，從左到右，其對應的幾何體名稱分別為（　　）") +
+      panel("題目由左到右四個展開圖", '<div class="opts">' +
+        [["cone","扇形+圓"],["cube","6 個正方形"],["prism","3 長方形+2 三角形"],["cyl","長方形+2 圓"]].map(p =>
+        '<button data-k="' + p[0] + '" aria-pressed="' + (state.q15 === p[0]) + '">' + p[1] + '</button>').join("") + '</div>') +
+      panel("認展開圖只有兩步", rules([
+        "第一步數塊數：圓錐 2 塊、圓柱 3 塊、三棱柱 5 塊、正方體 6 塊。",
+        "第二步看形狀：有弧邊的是圓錐或圓柱，全部直邊的是棱柱或正方體。",
+        "兩步就夠，不必急著在腦中折疊。"
+      ])) +
+      answer('<b>A</b>　圓錐、正方體、三棱柱、圓柱。');
+  }
+
+  else if(tab === "q16"){
+    scene = q16Scene();
+    noteEl.textContent = "Q16　豎放的三棱柱";
+    railHtml =
+      stem("從正面、左面、上面觀察某個立體圖形，得到的平面圖形為：正面是長方形中間一條豎線，左面是長方形，上面是三角形。這個立體圖形是（　　）") +
+      panel("逐個方向核對", rules([
+        "按「從上面看」：看到一個三角形，所以底面是三角形，圓錐和圓柱先剔除。",
+        "按「從正面看」：豎放的三棱柱有一條側棱正對觀察者，所以是長方形中間一條豎線。",
+        "三棱錐從正面看是三角形，不是長方形，也剔除。"
+      ])) +
+      answer('<b>C</b>　三棱柱。');
+  }
+
+  else if(tab === "q17"){
+    scene = q17Scene();
+    noteEl.textContent = "Q17　長方體加半圓柱，中間一個圓孔";
+    railHtml =
+      stem("某種機器零件如圖所示，從正面看到的物體的形狀圖是（　　）") +
+      panel("觀察重點", rules([
+        "外形是一個拱形：下面長方形，上面半圓。",
+        "圓孔開在上半部，所以圓要畫得高；畫低了就變成另一個選項。",
+        "圓孔是通孔，從正面看是一個完整的圓，不是虛線。"
+      ])) +
+      answer('<b>C</b>　拱形加上半部的圓。');
+  }
+
+  else if(tab === "q18"){
+    scene = q18Scene();
+    noteEl.textContent = "Q18　茶壺：壺嘴向右，壺柄向左";
+    railHtml =
+      stem("桌上放著一個茶壺，四個同學從各自的方向觀察。小陽在正面、小明在後面、小雯在右面、彬彬在左面。哪一幅是小雯看到的（　　）") +
+      panel("四個方向", rules([
+        "壺嘴染成啡色、壺柄染成綠色，轉方向時盯著這兩件就夠。",
+        "小雯在右面，壺嘴正對著她，看到的是一團對正自己的形狀；壺柄被壺身擋住。",
+        "彬彬在左面，壺柄正對自己，看到的是一條窄窄的橢圓。",
+        "小陽和小明在前後，壺嘴和壺柄都是側向的，一個向左、一個向右，兩人看到的圖形左右相反。"
+      ])) +
+      answer('<b>A</b>　壺嘴對正觀察者。選項 D 是彬彬看到的。');
+  }
+
+  else if(tab === "q19"){
+    scene = cubeNetScene(CROSS, Q19_MARKS[state.q19], null);
+    noteEl.textContent = "Q19　選項 " + state.q19;
+    railHtml =
+      stem("正方體上同時看到三個圖案：◆ 在上面、★ 在正面、● 在右面。下列哪一個是它的展開圖（　　）") +
+      panel("四個選項", '<div class="opts">' + ["A","B","C","D"].map(k =>
+        '<button data-k="' + k + '" aria-pressed="' + (k === state.q19) + '">' + k + '</button>').join("") + '</div>') +
+      panel("判斷方法", rules([
+        "三個圖案同時看得見，即是三個面 <span class=\"em\">兩兩相鄰</span>，沒有任何兩個是相對面。",
+        "相對面的兩條規律：<strong>同一行（或同一列）隔一格</strong>；<strong>斜排成 Z 字的兩端</strong>。",
+        "剩下兩個都相鄰的選項，再看左右有沒有調轉。折起來看最快。"
+      ])) +
+      answer('<b>A</b><br>B：◆ 與 ● 同一直行、中間隔著 ★，是相對面。<br>D：◆ 與 ● 同一橫行、中間隔著 ★，是相對面。<br>C：三個面雖然相鄰，但折出來 ◆ 在左面、● 在底面，是鏡像。');
+  }
+
+  else if(tab === "q20"){
+    scene = openBoxScene();
+    noteEl.textContent = "Q20　無蓋長方體盒子　底面 5 × 5，高 2";
+    railHtml =
+      stem("如圖是一個無蓋長方體盒子的展開圖（重疊部分不計）。若該長方體盒子的底面是一個正方形，求它的體積。") +
+      panel("摺線", '<div class="opts"><button data-act="lines" aria-pressed="' + (!state.foldLines) +
+        '">' + (state.foldLines ? "隱藏摺線（看工作紙原圖）" : "顯示摺線") + '</button></div>' +
+        '<p style="margin-top:9px">拉動滑桿會自動顯示摺線。</p>') +
+      panel("三步", rules([
+        "數面：無蓋盒子等於 <strong>1 個底面（正方形）加 4 個側面</strong>，一共五塊。",
+        "讀數：2 cm 是盒子的高；下方那條 10 cm 由 <strong>兩個側面並排組成</strong>，所以一個側面長 10 ÷ 2 ＝ 5 cm。",
+        "底面是正方形，邊長等於 5 cm。折起來核對一次，剛好封成一個無蓋盒子。"
+      ])) +
+      answer('底面 5 × 5，高 2<br><b>體積 ＝ 5 × 5 × 2 ＝ 50 cm³</b><br>核對：展開圖總面積 ＝ 5×5 + 4×(5×2) ＝ 65 cm²');
+  }
+
+  else if(tab === "parts"){
+    scene = solid612Scene(state.solid, state.part);
+    const d = SOLIDS[state.solid];
+    noteEl.textContent = d.name + (d.curved ? "（曲面）" : "");
+    const modeBtns = d.curved ? "" :
+      '<div class="opts" style="margin-top:10px">' +
+      [["face","面"],["edge","棱"],["vertex","頂點"]].map(m =>
+        '<button data-act="part:' + m[0] + '" aria-pressed="' + (state.part === m[0]) + '">標出' + m[1] + '</button>').join("") +
+      '</div>';
+    let counts = "";
+    if(!d.curved){
+      const ps = scene.polys(0);
+      counts = '<p style="margin-top:10px"><strong>面 ' + ps.length + '　棱 ' + edgesOf(ps).length +
+               '　頂點 ' + vertsOf(ps).length + '</strong></p>';
+    }
+    railHtml =
+      panel("選一個立體", '<div class="opts">' + Object.keys(SOLIDS).map(k =>
+        '<button data-act="solid:' + k + '" aria-pressed="' + (state.solid === k) + '">' + SOLIDS[k].name + '</button>').join("") +
+        '</div>' + modeBtns + counts) +
+      panel("三個名詞", rules([
+        "<strong>面</strong>：包住立體的那一塊塊皮。有平的（平面），也有彎的（曲面）。",
+        "<strong>棱</strong>：兩個面相交出來的那條線，就是立體的邊。按「標出棱」，全部棱會變成紅色。",
+        "<strong>頂點</strong>：棱與棱相交出來的那一點，就是立體的角。按「標出頂點」，全部頂點會變成紅點。"
+      ])) +
+      panel("這個立體", '<p>' + d.info + '</p>') +
+      panel("記一條公式", '<p>底面是 n 邊形的棱柱：頂點 <strong>2n</strong> 個、棱 <strong>3n</strong> 條、面 <strong>n＋2</strong> 個。' +
+        '三棱柱代 n＝3，就是 6 個頂點、9 條棱、5 個面。</p>');
+  }
+
+  else if(tab === "sweep"){
+    scene = sweepScene();
+    noteEl.textContent = "點 → 線 → 面 → 體";
+    railHtml =
+      stem("錶的指針旋轉時會形成一個圓面；筆在紙上移動時能畫出線。一般地，點動成線，＿＿＿＿，＿＿＿＿。") +
+      panel("拉動滑桿看三段", rules([
+        "<strong>點動成線</strong>：一個點沿一條路走過去，掃出一條線。",
+        "<strong>線動成面</strong>：這條線再向旁邊平移，掃出一個面。",
+        "<strong>面動成體</strong>：這個面再向上抬起，掃出一個立體。"
+      ])) +
+      panel("倒過來也要記", '<p>體由面圍成，面與面相交成線，線與線相交成點。這一句和上面那句是同一件事的兩個方向。</p>') +
+      answer('點動成線，<b>線動成面</b>，<b>面動成體</b>。');
+  }
+
+  else if(tab === "spin"){
+    scene = spinScene(state.spin);
+    const d = SPINS[state.spin];
+    noteEl.textContent = d.name + " 繞軸旋轉一周 → " + d.res;
+    railHtml =
+      stem("將圖中的平面圖形繞虛線（軸線）旋轉一周，得到的立體圖形是甚麼？") +
+      panel("選一個平面圖形", '<div class="opts">' + Object.keys(SPINS).map(k =>
+        '<button data-act="spin:' + k + '" aria-pressed="' + (state.spin === k) + '">' + SPINS[k].name + '</button>').join("") +
+        '</div><p style="margin-top:10px">' + d.name + ' 繞軸旋轉一周 → <span class="em">' + d.res + '</span></p>') +
+      panel("做這種題的方法", rules([
+        "先看清楚軸線在哪一邊，圖形是貼著軸還是離開軸。貼著軸旋轉出來是實心的。",
+        "把圖形沿軸對摺再翻過去，就是立體的正面輪廓。長方形變圓柱、直角三角形變圓錐、半圓變球。",
+        "花瓶那一題同樣做法：看輪廓的粗細變化，哪裡收窄、哪裡鼓出來。"
+      ])) +
+      answer('長方形 → 圓柱　　直角三角形 → 圓錐　　半圓 → 球　　梯形 → 圓台<br>' +
+             '工作紙 Q4（直角梯形，斜邊在上）→ <b>B</b>　圓柱上面加一個圓錐。');
+  }
+
+  else if(tab === "cut"){
+    scene = cutScene();
+    noteEl.textContent = "用一個平面豎直去截圓柱";
+    railHtml =
+      stem("用一個平面豎直去截圓柱，截面的形狀是（　　）") +
+      panel("拉動滑桿", rules([
+        "平面由左移到右，截出來的紅色部分一直是 <strong>長方形</strong>，只是寬窄不同。",
+        "越靠近中間越寬，剛好通過軸的時候最寬；越靠邊越窄。",
+        "如果改成橫著截（垂直於軸），截面就變成圓。方向不同，截面就不同。"
+      ])) +
+      answer('<b>B</b>　長方形。');
+  }
+
+  else if(tab === "nets"){
+    const cells = NETS[state.netKey][state.netIdx];
+    const st = netStatus(cells);
+    let tones = null, marks = null;
+    if(state.pairs && st.ids && st.ok){
+      const pairOf = f => "UD".indexOf(f) >= 0 ? 1 : ("NS".indexOf(f) >= 0 ? 2 : 3);
+      tones = {}; marks = {};
+      cells.forEach((c,i) => {
+        const k = c[0] + "," + c[1], n = pairOf(st.ids[i]);
+        tones[k] = "p" + n; marks[k] = String(n);
+      });
+    }
+    scene = cubeNetScene(cells, marks, tones);
+    noteEl.textContent = state.netKey + " 型　第 " + (state.netIdx+1) + " 種";
+
+    let thumbs = '<div class="netgrid">';
+    Object.keys(NETS).forEach(k => {
+      thumbs += '<div class="netrow"><span>' + k + '　' + NETS[k].length + ' 種</span><div class="thumbs">';
+      NETS[k].forEach((n,i) => {
+        thumbs += '<button class="thumb" data-k="' + k + '" data-i="' + i + '" aria-pressed="' +
+                  (k === state.netKey && i === state.netIdx) + '" aria-label="' + k + '第' + (i+1) + '種">' +
+                  netThumb(n,13) + '</button>';
+      });
+      thumbs += "</div></div>";
+    });
+    thumbs += "</div>";
+
+    railHtml =
+      panel("選擇展開圖", thumbs) +
+      panel("標示", '<div class="opts"><button data-act="pairs" aria-pressed="' + state.pairs +
+        '">標出三對相對面</button></div>') +
+      panel("要點", rules([
+        "六個正方形折得成正方體的擺法，一共只有 <strong>11 種</strong>：一四一 6 種、二三一 3 種、二二二 1 種、三三 1 種。",
+        "記住四個類型即可，不必死記十一張圖。",
+        "按「標出三對相對面」：同一個號碼、同一種顏色的兩格，折起來就是一對相對面。"
+      ]));
+  }
+
+  else if(tab === "build"){
+    const cells = state.build;
+    const st = netStatus(cells);
+    let tones = null;
+    if(cells.length === 6 && st.ids && !st.ok){
+      const count = {}; st.ids.forEach(f => { if(f) count[f] = (count[f] || 0) + 1; });
+      tones = {};
+      cells.forEach((c,i) => { if(st.ids[i] && count[st.ids[i]] > 1) tones[c[0] + "," + c[1]] = "warn"; });
+    }
+    scene = cells.length ? cubeNetScene(cells, null, tones) : cubeNetScene([[0,0]]);
+    noteEl.textContent = "自由拼砌　6 × 6 網格";
+    verdictEl.hidden = false;
+    if(cells.length !== 6){ verdictEl.dataset.state = "idle"; verdictEl.textContent = "請先選夠六格"; }
+    else if(st.why === "split"){ verdictEl.dataset.state = "bad"; verdictEl.textContent = "六格未連在一起"; }
+    else if(st.ok){ verdictEl.dataset.state = "good"; verdictEl.textContent = "折得成"; }
+    else { verdictEl.dataset.state = "bad"; verdictEl.textContent = "折不成：有兩格重疊"; }
+
+    let grid = '<div class="builder">';
+    for(let y=0;y<6;y++) for(let x=0;x<6;x++){
+      const on = cells.some(c => c[0] === x && c[1] === y);
+      const bad = tones && tones[x + "," + y] === "warn";
+      grid += '<button data-x="' + x + '" data-y="' + y + '" aria-pressed="' + on + '" class="' + (bad ? "bad" : "") +
+              '" aria-label="第' + (y+1) + '行第' + (x+1) + '格"></button>';
+    }
+    grid += '</div><div class="count">已選 ' + cells.length + ' / 6 格</div>';
+
+    railHtml =
+      panel("在網格上選六格", grid +
+        '<div class="opts" style="margin-top:11px"><button data-act="clear">清空</button>' +
+        '<button data-act="tian">田字例子</button><button data-act="ao">凹字例子</button></div>') +
+      panel("為甚麼折不成", rules([
+        "<strong>田字</strong>：四個正方形圍住一點，折起來必定有兩塊重疊，重疊的兩格會變成紅色。",
+        "<strong>凹字</strong>：一排三個、兩端各向上翹起一個，兩邊會撞在一起。",
+        "做題次序：① 數夠六格沒有　② 有沒有田字、凹字　③ 最後才對照四個類型。"
+      ]));
+  }
+
+  rail.innerHTML = railHtml;
+  paintMinis();
+  bindRail();
+  buildControls();
+  draw();
+}
+
+function bindRail(){
+  rail.querySelectorAll(".thumb").forEach(b => b.onclick = () => {
+    state.netKey = b.dataset.k; state.netIdx = +b.dataset.i; buildTab();
+  });
+  rail.querySelectorAll(".builder button").forEach(b => b.onclick = () => {
+    const x = +b.dataset.x, y = +b.dataset.y;
+    const i = state.build.findIndex(c => c[0] === x && c[1] === y);
+    if(i >= 0) state.build.splice(i,1);
+    else if(state.build.length < 6) state.build.push([x,y]);
+    buildTab();
+  });
+  const presets = {
+    clear: [],
+    tian:  [[1,1],[2,1],[3,1],[1,2],[2,2],[3,2]],
+    ao:    [[1,1],[3,1],[1,2],[2,2],[3,2],[2,3]]
+  };
+  rail.querySelectorAll("[data-act]").forEach(b => b.onclick = () => {
+    const a = b.dataset.act;
+    if(a === "pairs"){ state.pairs = !state.pairs; }
+    else if(a === "views"){ state.showViews = !state.showViews; }
+    else if(a.indexOf("solid:") === 0){ state.solid = a.slice(6); }
+    else if(a.indexOf("part:") === 0){ const v = a.slice(5); state.part = (state.part === v) ? null : v; }
+    else if(a.indexOf("spin:") === 0){ state.spin = a.slice(5); }
+    else if(a === "lines"){ state.foldLines = !state.foldLines; }
+    else { state.build = presets[a].map(c => c.slice()); }
+    buildTab();
+  });
+  rail.querySelectorAll("[data-k]:not(.thumb)").forEach(b => b.onclick = () => {
+    const k = b.dataset.k;
+    if(tab === "q13") state.q13 = k;
+    else if(tab === "q14") state.prism = k;
+    else if(tab === "q15") state.q15 = k;
+    else if(tab === "q19") state.q19 = k;
+    buildTab();
+  });
+}
+
+/* ==================== 控制列 ==================== */
+function buildControls(){
+  if(scene.kind === "fold"){
+    const ro = scene.readout || {cap:"摺疊角度", value: t => Math.round(ease(t)*90), unit:"°"};
+    controls.innerHTML =
+      '<div class="readout"><span class="cap">' + ro.cap + '</span>' +
+      '<span class="num" id="deg">0</span><span class="unit">' + ro.unit + '</span></div>' +
+      '<input type="range" id="slider" min="0" max="1000" value="0" aria-label="摺疊程度">' +
+      '<button class="act" id="play">播放</button>' +
+      '<button class="act ghost" id="reset">' + (scene.readout ? "重設" : "攤平") + '</button>';
+    document.getElementById("slider").addEventListener("input", e => { stopFold(); setT(e.target.value/1000); });
+    document.getElementById("play").onclick = () => { if(foldAnim) stopFold(); else playTo(T > 0.5 ? 0 : 1); };
+    document.getElementById("reset").onclick = () => { stopFold(); setT(0); };
+    setT(0);
+  } else {
+    controls.innerHTML = '<div class="viewbtns">' + scene.views.map(v =>
+      '<button type="button" data-v="' + v + '" aria-pressed="' + (v === currentView) + '">' +
+      VIEW_LABEL[v] + '</button>').join("") + '</div>';
+    controls.querySelectorAll("[data-v]").forEach(b => b.onclick = () => goView(b.dataset.v));
+    goView("iso", true);
+  }
+}
+
+let foldAnim = null;
+function setT(v){
+  T = Math.max(0, Math.min(1, v));
+  const end = (scene && scene.camEnd) || [-0.42, -0.58];
+  const sl = document.getElementById("slider"), dg = document.getElementById("deg");
+  if(sl) sl.value = Math.round(T*1000);
+  if(dg) dg.textContent = (scene.readout ? scene.readout.value(T) : Math.round(ease(T)*90));
+  const te = ease(T);
+  camBase.rx = end[0]*te; camBase.ry = end[1]*te;
+  applyCam();
+  draw();
+}
+function stopFold(){
+  if(foldAnim){ cancelAnimationFrame(foldAnim); foldAnim = null; }
+  const p = document.getElementById("play"); if(p) p.textContent = "播放";
+}
+function playTo(target){
+  stopFold();
+  const from = T, dur = 1600, t0 = performance.now();
+  const p = document.getElementById("play"); if(p) p.textContent = "暫停";
+  const step = now => {
+    const k = Math.min(1, (now - t0)/dur);
+    setT(from + (target - from)*k);
+    if(k < 1) foldAnim = requestAnimationFrame(step); else stopFold();
+  };
+  foldAnim = requestAnimationFrame(step);
+}
+
+function goView(v, immediate){
+  currentView = v;
+  controls.querySelectorAll("[data-v]").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === v));
+  const target = VIEW_ANGLE[v];
+  if(cam.anim){ cancelAnimationFrame(cam.anim); cam.anim = null; }
+  const r0 = camBase.rx + camOff.rx, y0 = camBase.ry + camOff.ry;
+  camOff.rx = 0; camOff.ry = 0;
+  if(immediate){ camBase.rx = target[0]; camBase.ry = target[1]; applyCam(); draw(); return; }
+  const dur = 700, t0 = performance.now();
+  const step = now => {
+    const k = Math.min(1, (now - t0)/dur), e = ease(k);
+    camBase.rx = r0 + (target[0]-r0)*e;
+    camBase.ry = y0 + (target[1]-y0)*e;
+    applyCam(); draw();
+    if(k < 1) cam.anim = requestAnimationFrame(step); else cam.anim = null;
+  };
+  cam.anim = requestAnimationFrame(step);
+}
+
+/* ==================== 輸入 ==================== */
+document.addEventListener("keydown", e => {
+  const tag = e.target.tagName;
+  if(tag === "INPUT" || tag === "SUMMARY") return;
+  if(tag === "BUTTON" && e.code === "Space") return;   // 空白鍵留給按鈕本身
+  if(e.code === "Space"){
+    e.preventDefault();
+    if(scene.kind === "fold"){ if(foldAnim) stopFold(); else playTo(T > 0.5 ? 0 : 1); }
+    else {
+      const i = scene.views.indexOf(currentView);
+      goView(scene.views[(i+1) % scene.views.length]);
+    }
+  }
+  if(e.code === "ArrowRight" || e.code === "PageDown"){
+    e.preventDefault();
+    if(scene.kind === "fold"){ stopFold(); setT(T + 0.1); }
+    else { const i = scene.views.indexOf(currentView); goView(scene.views[(i+1) % scene.views.length]); }
+  }
+  if(e.code === "ArrowLeft" || e.code === "PageUp"){
+    e.preventDefault();
+    if(scene.kind === "fold"){ stopFold(); setT(T - 0.1); }
+    else { const i = scene.views.indexOf(currentView); goView(scene.views[(i+scene.views.length-1) % scene.views.length]); }
+  }
+});
+
+cv.addEventListener("pointerdown", e => {
+  dragOn = true; lastX = e.clientX; lastY = e.clientY;
+  cv.setPointerCapture(e.pointerId);
+});
+cv.addEventListener("pointermove", e => {
+  if(!dragOn) return;
+  const dx = (e.clientX - lastX)*0.008, dy = (e.clientY - lastY)*0.008;
+  lastX = e.clientX; lastY = e.clientY;
+  camOff.rx = Math.max(-1.6, Math.min(1.6, camOff.rx + dy));
+  camOff.ry += dx;
+  applyCam();
+  draw();
+});
+["pointerup","pointercancel","pointerleave"].forEach(k => cv.addEventListener(k, () => dragOn = false));
+
+new ResizeObserver(() => draw()).observe(cv);
+buildTab();
+</script>
+</body></html>
