@@ -150,11 +150,17 @@ button:focus-visible, [role=tab]:focus-visible, summary:focus-visible{outline:2p
 .viewbtns button[aria-pressed="true"]{background:var(--ink); color:var(--ground); border-color:var(--ink)}
 .viewbtns button:hover{border-color:var(--ink)}
 
-.views{display:flex; gap:10px; justify-content:space-between}
-.viewbox{flex:1; text-align:center}
-.viewbox span{display:block; font-size:13px; color:var(--mute); margin-top:5px}
+.views{display:flex; gap:9px; justify-content:space-between}
+.viewbox{flex:1; text-align:center; display:flex; flex-direction:column; gap:5px}
+.viewbox span{display:block; font-size:13px; color:var(--mute)}
 .viewbox .plate{border:1px solid var(--line); background:var(--surface); padding:8px; display:grid; place-items:center; min-height:82px}
-.hiddenAns .plate svg{visibility:hidden}
+.viewbox .plate.hidden-ans svg{visibility:hidden}
+.viewbox button{
+  font-family:inherit; font-size:14px; padding:5px 0; cursor:pointer; border-radius:2px;
+  background:var(--ground); color:var(--sub); border:1px solid var(--line);
+}
+.viewbox button[aria-pressed="true"]{background:var(--ink); color:var(--ground); border-color:var(--ink)}
+.viewbox button:hover{border-color:var(--lineStrong)}
 
 canvas.mini{width:100%; height:auto; display:block; background:var(--surface); border:1px solid var(--line)}
 .minicap{font-size:14.5px; color:var(--sub); margin:9px 0 0}
@@ -1200,8 +1206,9 @@ function matGrid(mat){
 
 /* ==================== 各題內容 ==================== */
 const state = { netKey:"一四一", netIdx:0, pairs:false, q19:"A", prism:"C", round:"cyl",
-                q15:"cone", build:[[2,1],[1,2],[2,2],[3,2],[2,3],[2,4]], showViews:false,
-                solid:"cuboid", part:null, spin:"rect", q13:"A", foldLines:false };
+                q15:"cone", build:[[2,1],[1,2],[2,2],[3,2],[2,3],[2,4]],
+                solid:"cuboid", part:null, spin:"rect", q13:"A", foldLines:false,
+                showV:{front:false, side:false, top:false} };
 
 const Q10_H = [[1,1,2],[0,0,1]];
 const Q11_H = [[0,1,0],[1,2,1]];
@@ -1240,6 +1247,7 @@ nav.addEventListener("click", e => {
   const b = e.target.closest("button[data-id]");
   if(!b) return;
   tab = b.dataset.id;
+  state.showV = {front:false, side:false, top:false};
   Array.prototype.forEach.call(nav.querySelectorAll("button[data-id]"),
     c => c.setAttribute("aria-selected", c.dataset.id === tab));
   buildTab();
@@ -1300,14 +1308,22 @@ function stem(text){ return panel("題目", '<p class="stem">' + text + '</p>');
 
 function viewsPanel(heights){
   const v = threeViews(heights);
+  const box = (key, label, svg) =>
+    '<div class="viewbox">' +
+      '<div class="plate' + (state.showV[key] ? "" : " hidden-ans") + '">' + svg + '</div>' +
+      '<span>' + label + '</span>' +
+      '<button data-act="view:' + key + '" aria-pressed="' + state.showV[key] + '">' +
+        (state.showV[key] ? "隱藏" : "揭曉") + '</button>' +
+    '</div>';
+  const all = state.showV.front && state.showV.side && state.showV.top;
   return panel("三視圖",
-    '<div class="views' + (state.showViews ? "" : " hiddenAns") + '">' +
-      '<div class="viewbox"><div class="plate">' + colGrid(v.front) + '</div><span>從正面看</span></div>' +
-      '<div class="viewbox"><div class="plate">' + colGrid(v.side) + '</div><span>從左面看</span></div>' +
-      '<div class="viewbox"><div class="plate">' + matGrid(v.top) + '</div><span>從上面看</span></div>' +
+    '<div class="views">' +
+      box("front", "從正面看", colGrid(v.front)) +
+      box("side",  "從左面看", colGrid(v.side)) +
+      box("top",   "從上面看", matGrid(v.top)) +
     '</div>' +
-    '<div class="opts" style="margin-top:11px"><button data-act="views" aria-pressed="' + state.showViews + '">' +
-      (state.showViews ? "隱藏答案" : "顯示答案") + '</button></div>');
+    '<div class="opts" style="margin-top:11px"><button data-act="viewsAll">' +
+      (all ? "全部隱藏" : "全部揭曉") + '</button></div>');
 }
 
 const VIEW_LABEL = {iso:"立體圖", front:"從正面看", left:"從左面看", right:"從右面看", top:"從上面看"};
@@ -1676,7 +1692,11 @@ function bindRail(){
   rail.querySelectorAll("[data-act]").forEach(b => b.onclick = () => {
     const a = b.dataset.act;
     if(a === "pairs"){ state.pairs = !state.pairs; }
-    else if(a === "views"){ state.showViews = !state.showViews; }
+    else if(a.indexOf("view:") === 0){ const k = a.slice(5); state.showV[k] = !state.showV[k]; }
+    else if(a === "viewsAll"){
+      const all = state.showV.front && state.showV.side && state.showV.top;
+      state.showV = {front:!all, side:!all, top:!all};
+    }
     else if(a.indexOf("solid:") === 0){ state.solid = a.slice(6); }
     else if(a.indexOf("part:") === 0){ const v = a.slice(5); state.part = (state.part === v) ? null : v; }
     else if(a.indexOf("spin:") === 0){ state.spin = a.slice(5); }
