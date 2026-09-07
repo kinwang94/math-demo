@@ -86,9 +86,15 @@ canvas:active{cursor:grabbing}
   font-family:"IBM Plex Mono",monospace; letter-spacing:.05em; pointer-events:none;
 }
 .verdict{
-  position:absolute; right:16px; top:11px; font-size:15px; font-weight:500;
+  position:absolute; right:104px; top:11px; font-size:15px; font-weight:500;
   padding:4px 12px; border:1px solid var(--line); background:var(--ground); pointer-events:none;
 }
+.resetbtn{
+  position:absolute; right:14px; top:10px; z-index:2;
+  font-family:inherit; font-size:14.5px; padding:6px 14px; cursor:pointer; border-radius:2px;
+  background:var(--ground); color:var(--sub); border:1px solid var(--lineStrong);
+}
+.resetbtn:hover{border-color:var(--ink); color:var(--ink)}
 .verdict[data-state="good"]{color:var(--ok); border-color:var(--ok)}
 .verdict[data-state="bad"]{color:var(--accent); border-color:var(--accent)}
 .verdict[data-state="idle"]{color:var(--mute)}
@@ -208,6 +214,7 @@ canvas.mini{width:100%; height:auto; display:block; background:var(--surface); b
       <canvas id="cv"></canvas>
       <div class="stagenote" id="note"></div>
       <div class="verdict" id="verdict" data-state="idle" hidden></div>
+      <button type="button" class="resetbtn" id="resetAll" title="回到這一題的起始狀態">重設</button>
       <div class="controls" id="controls"></div>
     </div>
     <div class="rail" id="rail"></div>
@@ -892,8 +899,9 @@ function sphereSolid(R, NU, NV){
 }
 
 /* ==================== 場景：從不同方向看 ==================== */
-function solidScene(polys, views){
-  return { kind:"view", polys: () => polys, views: views || ["iso","front","left","top"], dashHidden:true };
+function solidScene(polys, views, defView){
+  return { kind:"view", polys: () => polys, views: views || ["iso","front","left","top"],
+           dashHidden:true, defView: defView || "iso" };
 }
 
 function cubesScene(heights){
@@ -956,7 +964,7 @@ function q16Scene(){
   }
   out.push({pts3: orient(V.map(v => [v[0],yT,v[2]]), [0,-1,0])});
   out.push({pts3: orient(V.map(v => [v[0],yB,v[2]]), [0,1,0])});
-  return solidScene(out);
+  return solidScene(out, null, "front");
 }
 
 /* Q17：長方體上加半個圓柱，中間一個圓孔 */
@@ -1345,7 +1353,7 @@ let currentView = "iso";
 
 function buildTab(){
   miniQueue = [];
-  T = 0; currentView = "iso";
+  T = 0;
   camBase.rx = 0; camBase.ry = 0; camOff.rx = 0; camOff.ry = 0; applyCam();
   verdictEl.hidden = true;
   let railHtml = "";
@@ -1742,11 +1750,12 @@ function buildControls(){
     document.getElementById("reset").onclick = () => { stopFold(); setT(0); };
     setT(0);
   } else {
+    currentView = scene.defView || "iso";
     controls.innerHTML = '<div class="viewbtns">' + scene.views.map(v =>
       '<button type="button" data-v="' + v + '" aria-pressed="' + (v === currentView) + '">' +
       VIEW_LABEL[v] + '</button>').join("") + '</div>';
     controls.querySelectorAll("[data-v]").forEach(b => b.onclick = () => goView(b.dataset.v));
-    goView("iso", true);
+    goView(scene.defView || "iso", true);
   }
 }
 
@@ -1836,6 +1845,11 @@ cv.addEventListener("pointermove", e => {
   draw();
 });
 ["pointerup","pointercancel","pointerleave"].forEach(k => cv.addEventListener(k, () => dragOn = false));
+
+document.getElementById("resetAll").onclick = () => {
+  camOff.rx = 0; camOff.ry = 0;
+  buildTab();
+};
 
 new ResizeObserver(() => draw()).observe(cv);
 buildTab();
