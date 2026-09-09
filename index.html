@@ -1,4 +1,13 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>立體圖形演示台</title>
+<style>html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <title>立體圖形演示台</title>
 <style>
 :root{
@@ -48,7 +57,7 @@ body{
 }
 .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums}
 
-.wrap{max-width:1580px; margin:0 auto; padding:18px 22px 26px; display:flex; flex-direction:column; gap:14px; min-height:100vh}
+.wrap{max-width:1580px; margin:0 auto; padding:18px 22px 26px; display:flex; flex-direction:column; gap:14px; height:100vh; overflow:hidden}
 
 header{display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap}
 h1{font-size:27px; font-weight:700; margin:0; letter-spacing:.01em}
@@ -58,6 +67,29 @@ h1{font-size:27px; font-weight:700; margin:0; letter-spacing:.01em}
   font-family:"IBM Plex Mono",monospace; font-size:12.5px; border:1px solid var(--line);
   border-bottom-width:2px; border-radius:4px; padding:1px 6px; color:var(--sub); background:var(--surface);
 }
+
+.secbar{position:relative; display:flex; align-items:center}
+.hamb{
+  display:inline-flex; align-items:center; gap:11px; padding:8px 16px; cursor:pointer;
+  background:var(--surface); border:1px solid var(--line); border-radius:2px;
+  font-family:inherit; font-size:16px; font-weight:500; color:var(--ink); line-height:1.3;
+}
+.hamb:hover{border-color:var(--lineStrong)}
+.hamb .bars{display:flex; flex-direction:column; gap:3px; width:17px; flex:0 0 auto}
+.hamb .bars i{display:block; height:2px; background:var(--ink)}
+.hamb .lbl{white-space:nowrap}
+.hamb .caret{color:var(--mute); font-size:12px; margin-left:2px}
+.secmenu{
+  position:absolute; left:0; top:calc(100% + 5px); z-index:40; min-width:250px; padding:4px;
+  background:var(--surface); border:1px solid var(--lineStrong);
+  box-shadow:0 8px 26px rgba(0,0,0,.14); display:flex; flex-direction:column;
+}
+.secmenu button{
+  padding:10px 15px; text-align:left; cursor:pointer; font-family:inherit;
+  font-size:15.5px; background:transparent; border:0; color:var(--sub); line-height:1.4;
+}
+.secmenu button:hover{background:var(--ground); color:var(--ink)}
+.secmenu button[aria-selected="true"]{color:var(--ink); font-weight:600; box-shadow:inset 3px 0 0 var(--accent)}
 
 nav{display:flex; gap:6px; overflow-x:auto; overflow-y:hidden; padding-bottom:5px; scrollbar-width:thin;
      scrollbar-color:var(--lineStrong) transparent; overscroll-behavior-x:contain}
@@ -77,7 +109,7 @@ nav button[aria-selected="true"] .t{color:var(--ground)}
 nav button[aria-selected="true"] .q{color:var(--ground); opacity:.6}
 nav .sep{flex:0 0 auto; width:1px; background:var(--line); margin:2px 6px}
 
-.main{display:grid; grid-template-columns:minmax(0,1fr) 386px; gap:14px; flex:1; min-height:0}
+.main{display:grid; grid-template-columns:minmax(0,1fr) 386px; grid-template-rows:minmax(0,1fr); gap:14px; flex:1; min-height:0}
 .stage{position:relative; background:var(--surface); border:1px solid var(--line); display:flex; flex-direction:column; min-height:480px}
 canvas{display:block; width:100%; flex:1; min-height:0; touch-action:none; cursor:grab}
 canvas:active{cursor:grabbing}
@@ -189,7 +221,8 @@ canvas.mini{width:100%; height:auto; display:block; background:var(--surface); b
 .count{font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--mute); text-align:center; margin-top:9px}
 
 @media (max-width:1120px){
-  .main{grid-template-columns:1fr}
+  .wrap{height:auto; min-height:100vh; overflow:visible}
+  .main{grid-template-columns:1fr; grid-template-rows:auto auto}
   .stage{min-height:400px}
 }
 @media (prefers-reduced-motion:reduce){ *{transition:none!important} }
@@ -199,7 +232,7 @@ canvas.mini{width:100%; height:auto; display:block; background:var(--surface); b
   <header>
     <div>
       <h1>立體圖形演示台</h1>
-      <p class="sub">初一幾何　第六章 6.1</p>
+      <p class="sub">初一幾何　第六章　幾何圖形初步</p>
     </div>
     <p class="hint">
       拖曳畫面可轉動角度<br>
@@ -207,6 +240,14 @@ canvas.mini{width:100%; height:auto; display:block; background:var(--surface); b
     </p>
   </header>
 
+  <div class="secbar">
+    <button type="button" class="hamb" id="hamBtn" aria-expanded="false" aria-haspopup="true">
+      <span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="lbl" id="hamLbl"></span>
+      <span class="caret" aria-hidden="true">&#9662;</span>
+    </button>
+    <div class="secmenu" id="secMenu" hidden></div>
+  </div>
   <nav role="tablist" id="tabs"></nav>
 
   <div class="main">
@@ -514,9 +555,13 @@ function draw(){
     });
     return r;
   });
-  const pad = 62;
+  if(scene.bounds){
+    minx = scene.bounds[0]; miny = scene.bounds[1];
+    maxx = scene.bounds[2]; maxy = scene.bounds[3];
+  }
+  const pad = scene.bounds ? 26 : 62;
   const ex = Math.max(maxx-minx, 1e-3), ey = Math.max(maxy-miny, 1e-3);
-  const s = Math.min((w-pad*2)/ex, (h-pad*2)/ey, 250);
+  const s = Math.min((w-pad*2)/ex, (h-pad*2)/ey, scene.bounds ? 1e9 : 250);
   const ox = w/2 - (minx+maxx)/2*s, oy = h/2 - (miny+maxy)/2*s;
   const toScreen = q => [ox + q[0]*s, oy + q[1]*s, q[2]];
 
@@ -554,11 +599,21 @@ function draw(){
   }
 
   // 面（畫家演算法：遠的先畫）
+  const grpZ = {};                                   // 同一件實體先整件比深度，避免互相穿插
+  camPts.forEach((cp,i) => {
+    const g = polys[i].grp;
+    if(g === undefined) return;
+    let z = 0; cp.forEach(v => z += v[2]); z /= cp.length;
+    if(!grpZ[g]) grpZ[g] = {s:0, n:0};
+    grpZ[g].s += z; grpZ[g].n++;
+  });
   const drawn = camPts.map((cp,i) => {
     const pts = cp.map(toScreen);
     let z = 0; cp.forEach(v => z += v[2]); z /= cp.length;
-    return {pts, z, src:polys[i], idx:i, nrm: unitNormal(cp)};
-  }).sort((a,b) => (a.src.top ? 1 : 0) - (b.src.top ? 1 : 0) || a.z - b.z);
+    const g = polys[i].grp;
+    const gz = (g !== undefined && grpZ[g]) ? grpZ[g].s/grpZ[g].n : z;
+    return {pts, z, gz, src:polys[i], idx:i, nrm: unitNormal(cp)};
+  }).sort((a,b) => (a.src.top ? 1 : 0) - (b.src.top ? 1 : 0) || a.gz - b.gz || a.z - b.z);
 
   ctx.lineJoin = "round";
   drawn.forEach(d => {
@@ -580,7 +635,11 @@ function draw(){
     }
 
     if(p.outline){
-      ctx.strokeStyle = C.edge; ctx.lineWidth = 2; ctx.stroke();
+      ctx.strokeStyle = p.color ? (C[p.color] || p.color) : C.edge;
+      ctx.lineWidth = p.w || 2;
+      if(p.dash) ctx.setLineDash(p.dash);
+      ctx.stroke();
+      ctx.setLineDash([]);
       return;
     }
     let base = C.face, edge = C.edge;
@@ -599,8 +658,9 @@ function draw(){
     }
   });
 
-  // 輪廓線與被擋住的棱
+  // 輪廓線與被擋住的棱（多件分開的實體不畫，否則後面的棱會穿過前面的塊）
   (function(){
+    if(scene.noEdgePass) return;
     const emap = new Map();
     const kk = v => Math.round(v[0]*900) + "," + Math.round(v[1]*900) + "," + Math.round(v[2]*900);
     camPts.forEach((cp,i) => {
@@ -640,6 +700,25 @@ function draw(){
     }
     ctx.lineCap = "butt";
   })();
+
+  // 文字標籤
+  if(scene.labels){
+    const L = scene.labels(te);
+    L.forEach(a => {
+      const q = toScreen(mApply(M, a.p));
+      ctx.font = '700 ' + (a.size || 19) + 'px "Noto Sans TC", sans-serif';
+      ctx.textAlign = a.align || "center";
+      ctx.textBaseline = a.baseline || "middle";
+      const x = q[0] + (a.dx || 0), y = q[1] + (a.dy || 0);
+      if(a.box !== false){
+        const tw = ctx.measureText(a.text).width, th = (a.size || 19);
+        ctx.fillStyle = C.surface;
+        ctx.fillRect(x - (a.align === "left" ? 2 : tw/2) - 4, y - th*0.72, tw + 8, th*1.42);
+      }
+      ctx.fillStyle = a.color ? (C[a.color] || a.color) : C.ink;
+      ctx.fillText(a.text, x, y);
+    });
+  }
 
   // 棱、頂點的標示
   if(scene.mode === "edge" || scene.mode === "vertex"){
@@ -1159,6 +1238,643 @@ function cutScene(){
            readout:{cap:"截面位置", value: t => Math.round(t*100), unit:"%"} };
 }
 
+
+/* ==================== 6.1.2 補：Q36 階梯體、Q37 九棱柱 ==================== */
+/* Q36：正方體截去一塊之後的階梯體。8 個面：2 個正方形、4 個長方形、2 個 L 形 */
+function q36Scene(){
+  const x0=-1, x1=1, yB=1, yM=0, yT=-1, zF=1, zM=0, zK=-1;
+  const F = [
+    {p:[[x0,yB,zF],[x1,yB,zF],[x1,yB,zK],[x0,yB,zK]], o:[0,1,0],  t:"p1"},   // 底面 正方形
+    {p:[[x0,yT,zK],[x1,yT,zK],[x1,yB,zK],[x0,yB,zK]], o:[0,0,-1], t:"p1"},   // 後面 正方形
+    {p:[[x0,yM,zF],[x1,yM,zF],[x1,yB,zF],[x0,yB,zF]], o:[0,0,1],  t:"p2"},   // 下層前面 長方形
+    {p:[[x0,yM,zM],[x1,yM,zM],[x1,yM,zF],[x0,yM,zF]], o:[0,-1,0], t:"p2"},   // 台階面 長方形
+    {p:[[x0,yT,zM],[x1,yT,zM],[x1,yM,zM],[x0,yM,zM]], o:[0,0,1],  t:"p2"},   // 上層前面 長方形
+    {p:[[x0,yT,zK],[x1,yT,zK],[x1,yT,zM],[x0,yT,zM]], o:[0,-1,0], t:"p2"},   // 上層頂面 長方形
+    {p:[[x0,yT,zM],[x0,yM,zM],[x0,yM,zF],[x0,yB,zF],[x0,yB,zK],[x0,yT,zK]], o:[-1,0,0], t:"p3"}, // 左面 L 形
+    {p:[[x1,yT,zM],[x1,yM,zM],[x1,yM,zF],[x1,yB,zF],[x1,yB,zK],[x1,yT,zK]], o:[1,0,0],  t:"p3"}  // 右面 L 形
+  ];
+  const polys = F.map(f => ({pts3: orient(f.p, f.o), tone: f.t}));
+  return { kind:"view", polys: () => polys, views:["iso","front","left","top"], dashHidden:true, defView:"iso" };
+}
+
+/* Q37：n 棱柱，側面染色，可以攤平成一個長方形 */
+function q37Scene(n, marks){
+  const A = 0.62, yT = -1.55, yB = 1.55;      // 底邊長 : 側棱長 ＝ 2 : 10，同題目一樣
+  const H = yB - yT;
+
+  // 截面折線：外角由 2π/n 逐漸變成 0，攤平時就是一條直線
+  function section(u){
+    const th = (1-u)*2*Math.PI/n, P = [[0,0]];
+    let x = 0, z = 0;
+    for(let k=0;k<n;k++){
+      const ph = k*th;
+      x += A*Math.cos(ph); z += A*Math.sin(ph);
+      P.push([x, z]);
+    }
+    return P;                                  // n+1 個點；u ＝ 0 時尾接首
+  }
+
+  // 底面在「面 0」局部座標的位置（沿棱 α、向內 β）
+  const REF = section(0);
+  const LOC = [];
+  for(let j=0;j<n;j++) LOC.push([REF[j][0], REF[j][1]]);   // d ＝ (1,0)，內側 ＝ (0,1)
+
+  function baseFace(u, top){
+    const ps = u*Math.PI/2, cs = Math.cos(ps), sn = Math.sin(ps);
+    const y0 = top ? yT : yB, sg = top ? -1 : 1;
+    return LOC.map(q => [q[0], y0 + q[1]*sn*sg, q[1]*cs]);
+  }
+
+  const polys = t => {
+    const P = section(t), out = [];
+    for(let i=0;i<n;i++){
+      const a = P[i], b = P[i+1];
+      const dx = (b[0]-a[0])/A, dz = (b[1]-a[1])/A;
+      const nrm = [dz, 0, -dx];                              // 向外
+      out.push({pts3: orient([[a[0],yT,a[1]],[b[0],yT,b[1]],[b[0],yB,b[1]],[a[0],yB,a[1]]], nrm),
+                tone:"hl1", grp:i});
+    }
+    const ps = t*Math.PI/2;
+    out.push({pts3: orient(baseFace(t, true),  [0,-Math.cos(ps),-Math.sin(ps)]), tone:"p3", grp:n});
+    out.push({pts3: orient(baseFace(t, false), [0, Math.cos(ps),-Math.sin(ps)]), tone:"p3", grp:n+1});
+    return out;
+  };
+
+  const labels = t => {
+    if(!marks) return [];
+    const P = section(t), m = Math.floor(n/2);
+    const mid = [(P[m][0]+P[m+1][0])/2, (P[m][1]+P[m+1][1])/2];
+    const L = [
+      {p:[P[n][0], (yT+yB)/2, P[n][1]], text:"側棱長 10 cm", size:16, align:"left", dx:14},
+      {p:[mid[0], yB, mid[1]], text:"底邊長 2 cm", size:16, dy:28}
+    ];
+    if(t > 0.92){
+      L.push({p:[n*A/2, yB, 0], size:17, dy:66,
+              text:"闊 ＝ " + n + " × 2 ＝ " + (2*n) + " cm"});
+      L.push({p:[n*A/2, (yT+yB)/2, 0], size:19,
+              text:"側面積 ＝ " + (2*n) + " × 10 ＝ " + (20*n) + " cm\u00B2"});
+    }
+    return L;
+  };
+
+  return { kind:"fold", polys, labels, noEdgePass:true,
+           camStart:[-0.42,-0.58], camEnd:[0,0],
+           readout:{cap:"攤平", value: t => Math.round(t*100), unit:"%"} };
+}
+
+/* ==================== 6.2.1 直線、射線、線段 ==================== */
+const FLAT = {kind:"fold", flat:true};
+
+function dot(x, y, r, tone){
+  const a = [];
+  for(let i=0;i<16;i++){ const q = i/16*2*Math.PI; a.push([x + r*Math.cos(q), y + r*Math.sin(q), 0]); }
+  return {pts3:a, tone: tone || "warn"};
+}
+function seg(x1,y1,x2,y2,opt){
+  return Object.assign({pts3:[[x1,y1,0],[x2,y2,0]], outline:true, w:2.6}, opt || {});
+}
+function arrowHead(x, y, dir, size, color){
+  const d = dir, n = [-d[1], d[0]];
+  return {pts3:[
+    [x, y, 0],
+    [x - size*d[0] + size*0.45*n[0], y - size*d[1] + size*0.45*n[1], 0],
+    [x - size*d[0] - size*0.45*n[0], y - size*d[1] - size*0.45*n[1], 0]
+  ], tone: color || "warn"};
+}
+
+/* 直線、射線、線段三兄弟 */
+function line3Scene(){
+  const B = [-5.2, -2.6, 5.2, 2.6];
+  const rows = [
+    {y:-1.5, name:"線段 AB", left:false, right:false},
+    {y: 0.0, name:"射線 AB", left:false, right:true},
+    {y: 1.5, name:"直線 AB", left:true,  right:true}
+  ];
+  const ax = -2.0, bx = 1.2;
+  const polys = t => {
+    const out = [];
+    rows.forEach(r => {
+      const ext = 3.6*t;
+      const x1 = r.left ? ax - ext : ax;
+      const x2 = r.right ? bx + ext : bx;
+      out.push(seg(x1, r.y, x2, r.y, {color:"edge", w:3}));
+      if(r.left && t > 0.05)  out.push(arrowHead(x1, r.y, [-1,0], 0.26, "warn"));
+      if(r.right && t > 0.05) out.push(arrowHead(x2, r.y, [1,0], 0.26, "warn"));
+      if(!r.left)  out.push(dot(ax, r.y, 0.10));
+      if(!r.right) out.push(dot(bx, r.y, 0.10));
+    });
+    return out;
+  };
+  const labels = t => {
+    const L = [];
+    rows.forEach(r => {
+      L.push({p:[-4.9, r.y, 0], text:r.name, align:"left", size:20});
+      if(!r.left)  L.push({p:[ax, r.y, 0], text:"A", dy:-24, size:18, box:false});
+      if(!r.right) L.push({p:[bx, r.y, 0], text:"B", dy:-24, size:18, box:false});
+    });
+    L.push({p:[0, -2.25, 0], text:"線段兩端都停住；射線只停一端；直線兩端都停不住", size:17, color:"sub"});
+    return L;
+  };
+  return Object.assign({}, FLAT, {polys, labels, bounds:B,
+    readout:{cap:"延伸", value: t => Math.round(t*100), unit:"%"}});
+}
+
+/* 兩點確定一條直線 */
+function twoPtScene(mode){
+  const B = [-4.4, -2.6, 4.4, 2.6];
+  const A = [-1.6, 0.6], P2 = [1.7, -0.7];
+  const polys = t => {
+    const out = [];
+    const draw = (ang, faint) => {
+      const dx = Math.cos(ang)*9, dy = Math.sin(ang)*9;
+      out.push(seg(A[0]-dx, A[1]-dy, A[0]+dx, A[1]+dy,
+        {color: faint ? "lineStrong" : "accent", w: faint ? 1.4 : 3}));
+    };
+    if(mode === "one"){
+      const N = 9;
+      for(let i=0;i<N;i++){
+        const a = (i/N)*Math.PI;
+        if(a <= Math.PI*t + 1e-6) draw(a, true);
+      }
+      draw(Math.PI*t, false);
+      out.push(dot(A[0], A[1], 0.11));
+    } else {
+      const ang = Math.atan2(P2[1]-A[1], P2[0]-A[0]);
+      draw(ang, false);
+      out.push(dot(A[0], A[1], 0.11));
+      out.push(dot(P2[0], P2[1], 0.11));
+    }
+    return out;
+  };
+  const labels = () => {
+    const L = [{p:[A[0], A[1], 0], text:"A", dy:-24, size:19, box:false}];
+    if(mode !== "one") L.push({p:[P2[0], P2[1], 0], text:"B", dy:-24, size:19, box:false});
+    L.push({p:[0, 2.15, 0], text: mode === "one" ? "經過一個點，可以畫無數條直線"
+                                                 : "經過兩個點，只可以畫一條直線", size:21});
+    return L;
+  };
+  return Object.assign({}, FLAT, {polys, labels, bounds:B,
+    readout:{cap: mode === "one" ? "轉動" : "固定", value: t => Math.round(t*180), unit:"°"}});
+}
+
+/* 交點個數 / 切幾刀分幾塊 */
+function crossScene(mode){
+  const nOf = t => Math.max(1, Math.min(5, 1 + Math.round(t*4)));
+
+  /* 數交點：五條直線的斜率同截距特意錯開，令十個交點分得夠開 */
+  const PP = [-2.0, -1.1, -0.2, 0.9, 2.0];
+  const SLOPE = -0.3846;
+  const LINES = PP.map(q => ({a: SLOPE*q, b: 0.5*q*q - 0.45}));
+
+  /* 數塊數：五刀都同一個小圓相切，交點自然排成一圈，互不重疊 */
+  const R2 = 3.35, RHO = 0.95;
+  const TRI = [0,1,2].map(i => {
+    const a = -Math.PI/2 + i*2*Math.PI/3;
+    return [R2*Math.cos(a), R2*Math.sin(a)];
+  });
+  const CUTS = [0,1,2,3,4].map(i => {
+    const th = 0.314 + i*Math.PI/5;
+    return {f:[RHO*Math.cos(th), RHO*Math.sin(th)], d:[-Math.sin(th), Math.cos(th)]};
+  });
+  function clipToTri(f, d){
+    const us = [];
+    for(let i=0;i<3;i++){
+      const P = TRI[i], Q = TRI[(i+1)%3];
+      const ex = Q[0]-P[0], ey = Q[1]-P[1];
+      const den = d[0]*ey - d[1]*ex;
+      if(Math.abs(den) < 1e-9) continue;
+      const wx = P[0]-f[0], wy = P[1]-f[1];
+      const u = (wx*ey - wy*ex) / den;
+      const v = (wx*d[1] - wy*d[0]) / den;
+      if(v >= -1e-9 && v <= 1+1e-9) us.push(u);
+    }
+    if(us.length < 2) return null;
+    const lo = Math.min.apply(null, us), hi = Math.max.apply(null, us);
+    return [[f[0]+lo*d[0], f[1]+lo*d[1]], [f[0]+hi*d[0], f[1]+hi*d[1]]];
+  }
+
+  const B = mode === "cross" ? [-4.6, -3.0, 4.6, 3.0] : [-3.8, -3.6, 3.8, 2.75];
+
+  const polys = t => {
+    const out = [], n = nOf(t);
+    if(mode === "cut"){
+      out.push({pts3: TRI.map(q => [q[0], q[1], 0]), tone:"p3"});
+      for(let i=0;i<n;i++){
+        const c = clipToTri(CUTS[i].f, CUTS[i].d);
+        if(c) out.push(seg(c[0][0], c[0][1], c[1][0], c[1][1], {color:"accent", w:2.8}));
+      }
+      return out;
+    }
+    const x = 6.2;
+    for(let i=0;i<n;i++){
+      const L = LINES[i];
+      out.push(seg(-x, L.a*(-x)+L.b, x, L.a*x+L.b, {color:"edge", w:2.4}));
+    }
+    for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
+      const A = LINES[i], Bl = LINES[j];
+      if(Math.abs(A.a - Bl.a) < 1e-6) continue;
+      const px = (Bl.b - A.b)/(A.a - Bl.a), py = A.a*px + A.b;
+      if(px > B[0]+0.2 && px < B[2]-0.2 && py > B[1]+0.2 && py < B[3]-0.2) out.push(dot(px, py, 0.13));
+    }
+    return out;
+  };
+  const labels = t => {
+    const n = nOf(t);
+    const pts = n*(n-1)/2, parts = 1 + n + n*(n-1)/2;
+    return [ mode === "cross"
+      ? {p:[0, -2.55, 0], size:21, text: n + " 條直線　最多 " + pts + " 個交點"}
+      : {p:[0,  2.40, 0], size:21, text: "切 " + n + " 刀　最多分成 " + parts + " 塊"} ];
+  };
+  return Object.assign({}, FLAT, {polys, labels, bounds:B,
+    readout:{cap: mode === "cross" ? "直線條數" : "刀數", value: t => nOf(t), unit:"條"}});
+}
+
+/* 補充：立體蛋糕。垂直切三刀 7 塊；兩刀垂直加一刀水平 8 塊 */
+function cake3Scene(mode){
+  const R = 1.30, yT = -0.60, yB = 0.60;
+  const TRI = [0,1,2].map(i => {
+    const a = Math.PI/2 + i*2*Math.PI/3;
+    return [R*Math.cos(a), R*Math.sin(a)];          // 平面座標 (x, z)
+  });
+  const CUT = mode === "v3"
+    ? [270, 30, 150].map(dg => ({th: dg*Math.PI/180, rho: 0.24}))   // 圍出中間一小塊
+    : [50, 129].map(dg => ({th: dg*Math.PI/180, rho: 0}));          // 兩刀都過中心，四份大致相等
+
+  function clipHalf(poly, n, c, sgn){
+    const f = q => sgn*(n[0]*q[0] + n[1]*q[1] - c);
+    const out = [];
+    for(let i=0;i<poly.length;i++){
+      const A = poly[i], Bp = poly[(i+1)%poly.length];
+      const fa = f(A), fb = f(Bp);
+      if(fa <= 1e-9) out.push(A);
+      if((fa < -1e-9 && fb > 1e-9) || (fa > 1e-9 && fb < -1e-9)){
+        const u = fa/(fa-fb);
+        out.push([A[0]+u*(Bp[0]-A[0]), A[1]+u*(Bp[1]-A[1])]);
+      }
+    }
+    return out;
+  }
+  function areaOf(poly){
+    let a = 0;
+    for(let i=0;i<poly.length;i++){ const u = poly[i], v = poly[(i+1)%poly.length]; a += u[0]*v[1] - v[0]*u[1]; }
+    return Math.abs(a)/2;
+  }
+  function centOf(poly){
+    let x = 0, z = 0;
+    poly.forEach(q => { x += q[0]; z += q[1]; });
+    return [x/poly.length, z/poly.length];
+  }
+
+  // 用符號組合窮舉所有分區
+  const REGIONS = (() => {
+    const out = [], K = CUT.length;
+    for(let m=0; m < (1<<K); m++){
+      let poly = TRI.slice();
+      for(let i=0;i<K;i++){
+        const n = [Math.cos(CUT[i].th), Math.sin(CUT[i].th)];
+        poly = clipHalf(poly, n, CUT[i].rho, (m>>i & 1) ? 1 : -1);
+        if(poly.length < 3) break;
+      }
+      if(poly.length >= 3 && areaOf(poly) > 0.012) out.push(poly);
+    }
+    return out;
+  })();
+
+  const LAYERS = mode === "v3" ? [[yT, yB]] : [[yT, 0], [0, yB]];
+  const PIECES = [];
+  LAYERS.forEach((ly, li) => REGIONS.forEach(rg => PIECES.push({poly:rg, y0:ly[0], y1:ly[1], layer:li})));
+  const COUNT = PIECES.length;
+  const TONES = ["p1","p2","p3","hl1","hl2","ok","face","faceBack"];
+  const EXP = mode === "v3" ? 0.72 : 1.00, EY = 0.95;
+
+  function offsetOf(pc, t){
+    const c = centOf(pc.poly), L = Math.hypot(c[0], c[1]);
+    const d = L > 1e-6 ? [c[0]/L, c[1]/L] : [0, 0];
+    const dy = LAYERS.length === 1 ? 0 : (pc.layer === 0 ? -EY : EY);
+    const k = 0.05 + EXP*t, ky = 0.03 + t;
+    return [d[0]*k, dy*ky, d[1]*k];
+  }
+
+  // 一條刀痕在三角形內的兩個端點
+  function cutEnds(cu){
+    const n = [Math.cos(cu.th), Math.sin(cu.th)];
+    const d = [-n[1], n[0]], f = [n[0]*cu.rho, n[1]*cu.rho];
+    const us = [];
+    for(let i=0;i<3;i++){
+      const P = TRI[i], Q = TRI[(i+1)%3];
+      const ex = Q[0]-P[0], ey = Q[1]-P[1];
+      const den = d[0]*ey - d[1]*ex;
+      if(Math.abs(den) < 1e-9) continue;
+      const wx = P[0]-f[0], wy = P[1]-f[1];
+      const u = (wx*ey - wy*ex)/den, v = (wx*d[1] - wy*d[0])/den;
+      if(v >= -1e-9 && v <= 1+1e-9) us.push(u);
+    }
+    if(us.length < 2) return null;
+    const lo = Math.min.apply(null, us), hi = Math.max.apply(null, us);
+    return [[f[0]+lo*d[0], f[1]+lo*d[1]], [f[0]+hi*d[0], f[1]+hi*d[1]]];
+  }
+
+  // 未切開的整個蛋糕，表面畫上刀痕
+  function wholeCake(){
+    const out = [], P = TRI.map(q => [q[0], 0, q[1]]);
+    out.push({pts3: orient(P.map(v => [v[0], yT, v[2]]), [0,-1,0]), tone:"p3"});
+    out.push({pts3: orient(P.map(v => [v[0], yB, v[2]]), [0, 1,0]), tone:"p3"});
+    for(let k=0;k<3;k++){
+      const a = P[k], b = P[(k+1)%3];
+      out.push({pts3: orient([[a[0],yT,a[2]],[b[0],yT,b[2]],[b[0],yB,b[2]],[a[0],yB,a[2]]],
+                             [(a[0]+b[0])/2, 0, (a[2]+b[2])/2]), tone:"p3"});
+    }
+    CUT.forEach(cu => {
+      const e = cutEnds(cu);
+      if(e) out.push({pts3:[[e[0][0], yT-0.02, e[0][1]], [e[1][0], yT-0.02, e[1][1]]],
+                      outline:true, top:true, color:"accent", w:2.8});
+    });
+    if(mode !== "v3"){
+      for(let k=0;k<3;k++){
+        const a = TRI[k], b = TRI[(k+1)%3];
+        out.push({pts3:[[a[0]*1.03, 0, a[1]*1.03], [b[0]*1.03, 0, b[1]*1.03]],
+                  outline:true, color:"accent", w:2.8});
+      }
+    }
+    return out;
+  }
+
+  const polys = t => {
+    if(t < 0.02) return wholeCake();
+    const out = [];
+    PIECES.forEach((pc, i) => {
+      const off = offsetOf(pc, t), tone = TONES[i % TONES.length];
+      const c = centOf(pc.poly);
+      const P = pc.poly.map(q => [q[0]+off[0], 0, q[1]+off[2]]);
+      const yt = pc.y0 + off[1], yb = pc.y1 + off[1];
+      out.push({pts3: orient(P.map(v => [v[0], yt, v[2]]), [0,-1,0]), tone, grp:i});
+      out.push({pts3: orient(P.map(v => [v[0], yb, v[2]]), [0, 1,0]), tone, grp:i});
+      for(let k=0;k<P.length;k++){
+        const a = P[k], b = P[(k+1)%P.length];
+        const mx = (a[0]+b[0])/2 - off[0], mz = (a[2]+b[2])/2 - off[2];
+        out.push({pts3: orient([[a[0],yt,a[2]],[b[0],yt,b[2]],[b[0],yb,b[2]],[a[0],yb,a[2]]],
+                               [mx-c[0], 0, mz-c[1]]), tone, grp:i});
+      }
+    });
+    return out;
+  };
+
+  const labels = t => {
+    if(t < 0.35) return [];
+    return PIECES.map((pc, i) => {
+      const off = offsetOf(pc, t), c = centOf(pc.poly);
+      return {p:[c[0]+off[0], pc.y0+off[1]-0.02, c[1]+off[2]],
+              text:String(i+1), size:17, box:true};
+    });
+  };
+
+  const CAM = mode === "v3" ? [-1.02, -0.46] : [-0.62, -0.62];
+  return { kind:"fold", polys, labels, count:COUNT, noEdgePass:true,
+           camStart:CAM, camEnd:CAM,
+           readout:{cap:"塊數", value: () => String(COUNT), unit:"塊"} };
+}
+
+/* 一條直線上的點：數線段同射線 */
+function countScene(ray){
+  const B = [-5.2, -3.15, 5.2, 3.15];
+  const NAMES = ["A","B","C","D","E"];
+  const XS = [-3.3, -1.6, 0.1, 1.7, 3.2];
+  const LX = -4.6, RX = 4.6;
+  const Y0 = -2.30;                       // 主直線的高度
+  const ROW0 = -1.60, DY = 0.38, GAP = 0.17;
+  const nOf = t => Math.max(2, Math.min(5, 2 + Math.round(t*3)));
+
+  // 逐列的資料：起點、終點、名稱、是否射線
+  function rows(n){
+    const R = [];
+    if(!ray){
+      for(let i=0;i<n;i++) for(let j=i+1;j<n;j++)
+        R.push({x1:XS[i], x2:XS[j], name:NAMES[i]+NAMES[j], grp:i, arrow:0});
+    } else {
+      for(let i=0;i<n;i++){
+        R.push({x1:XS[i], x2:LX, name:NAMES[i]+" 向左", grp:i, arrow:-1});
+        R.push({x1:XS[i], x2:RX, name:NAMES[i]+" 向右", grp:i, arrow: 1});
+      }
+    }
+    let y = ROW0, last = -1;
+    R.forEach(r => { if(r.grp !== last && last >= 0) y += GAP; last = r.grp; r.y = y; y += DY; });
+    return R;
+  }
+
+  const polys = t => {
+    const n = nOf(t), out = [];
+    out.push(seg(LX, Y0, RX, Y0, {color:"edge", w:2.6}));
+    out.push(arrowHead(LX, Y0, [-1,0], 0.24, "warn"));
+    out.push(arrowHead(RX, Y0, [ 1,0], 0.24, "warn"));
+    for(let i=0;i<n;i++) out.push(dot(XS[i], Y0, 0.115));
+    rows(n).forEach(r => {
+      out.push(seg(r.x1, r.y, r.x2, r.y, {color:"accent", w:2.2}));
+      out.push(dot(r.x1, r.y, 0.075, "warn"));
+      if(r.arrow) out.push(arrowHead(r.x2, r.y, [r.arrow, 0], 0.20, "warn"));
+      else out.push(dot(r.x2, r.y, 0.075, "warn"));
+    });
+    return out;
+  };
+  const labels = t => {
+    const n = nOf(t), L = [];
+    for(let i=0;i<n;i++) L.push({p:[XS[i], Y0, 0], text:NAMES[i], dy:-26, size:19, box:false});
+    L.push({p:[0, -2.92, 0], size:21, text: ray
+      ? (n + " 個點　→　射線 " + (2*n) + " 條")
+      : (n + " 個點　→　線段 " + (n*(n-1)/2) + " 條")});
+    rows(n).forEach(r => {
+      const lx = ray ? (r.arrow > 0 ? r.x1 - 0.18 : r.x1 + 0.18) : Math.max(r.x1, r.x2) + 0.18;
+      const al = ray ? (r.arrow > 0 ? "right" : "left") : "left";
+      L.push({p:[lx, r.y, 0], text:r.name, size:15, align:al, box:false, color:"mute"});
+    });
+    return L;
+  };
+  return Object.assign({}, FLAT, {polys, labels, bounds:B,
+    readout:{cap:"點數", value: t => nOf(t), unit:"個"}});
+}
+
+/* ==================== 6.2.2 線段的比較與運算 ==================== */
+const SEGCASES = {
+  q2: {
+    name:"Q2　中點套中點", btn:"Q2",
+    stem:"點 C、D 分別是線段 AD、AB 的中點，AB ＝ 4a，求 CB。",
+    ans:"D 是 AB 的中點 → AD ＝ 2a　　C 是 AD 的中點 → AC ＝ a　　CB ＝ 4a − a ＝ 3a（選 C）",
+    build(){
+      return {pts:[{x:0,n:"A"},{x:1,n:"C"},{x:2,n:"D"},{x:4,n:"B"}],
+              dims:[[0,1,"AC = a",0.55],[1,2,"CD = a",0.55],[2,4,"DB = 2a",0.55],
+                    [1,4,"CB = 3a",1.15],[0,4,"AB = 4a",1.75]],
+              len:4};
+    }
+  },
+  q3a: {
+    name:"Q3　C 在 B 外側", btn:"Q3 外",
+    stem:"A、B、C 三點共線，AB ＝ 20 cm，BC ＝ 8 cm，求 AC。",
+    ans:"C 在 B 外側：AC ＝ 20 ＋ 8 ＝ 28 cm",
+    build(){
+      return {pts:[{x:0,n:"A"},{x:20,n:"B"},{x:28,n:"C"}],
+              dims:[[0,20,"AB = 20",0.55],[20,28,"BC = 8",0.55],[0,28,"AC = 28",1.15]],
+              len:28};
+    }
+  },
+  q3b: {
+    name:"Q3　C 在 A、B 之間", btn:"Q3 內",
+    stem:"A、B、C 三點共線，AB ＝ 20 cm，BC ＝ 8 cm，求 AC。",
+    ans:"C 在 A、B 之間：AC ＝ 20 − 8 ＝ 12 cm　　兩種情況都要答，所以選 C（28 cm 或 12 cm）",
+    build(){
+      return {pts:[{x:0,n:"A"},{x:12,n:"C"},{x:20,n:"B"}],
+              dims:[[0,12,"AC = 12",0.55],[12,20,"CB = 8",0.55],[0,20,"AB = 20",1.15]],
+              len:20};
+    }
+  },
+  q4: {
+    name:"Q4(1)(2)　兩個中點", btn:"Q4(1)(2)",
+    stem:"點 C 在線段 AB 上，AB ＝ 40 cm，AC ＝ 16 cm，M、N 分別是 AB、BC 的中點。求 BN、MN。",
+    ans:"BC ＝ 40 − 16 ＝ 24　　BN ＝ 24 ÷ 2 ＝ 12 cm<br>AM ＝ 40 ÷ 2 ＝ 20，AN ＝ 16 ＋ 12 ＝ 28　　MN ＝ 28 − 20 ＝ 8 cm",
+    build(){
+      return {pts:[{x:0,n:"A"},{x:16,n:"C"},{x:20,n:"M"},{x:28,n:"N"},{x:40,n:"B"}],
+              dims:[[0,16,"AC = 16",0.55],[16,28,"CN = 12",1.05],[28,40,"NB = 12",1.05],
+                    [20,28,"MN = 8",1.55],[0,40,"AB = 40",2.05]],
+              len:40};
+    }
+  },
+  q4a: {
+    name:"Q4(3)　P 在 A 外側", btn:"Q4(3) 外",
+    stem:"承上題。P 在直線 AB 上且 PA ＝ 2 cm，Q 是 BP 的中點，求 QN。",
+    ans:"P 在 A 外側：PB ＝ 2 ＋ 40 ＝ 42　　PQ ＝ 21，即 Q 在 A 右邊 19<br>QN ＝ 28 − 19 ＝ 9 cm",
+    build(){
+      return {pts:[{x:0,n:"P"},{x:2,n:"A"},{x:18,n:"C"},{x:21,n:"Q"},{x:30,n:"N"},{x:42,n:"B"}],
+              dims:[[0,2,"PA = 2",0.55],[21,30,"QN = 9",1.05],[0,42,"PB = 42",1.75]],
+              len:42};
+    }
+  },
+  q4b: {
+    name:"Q4(3)　P 在 A 右邊", btn:"Q4(3) 內",
+    stem:"承上題。P 在直線 AB 上且 PA ＝ 2 cm，Q 是 BP 的中點，求 QN。",
+    ans:"P 在 A 右邊：PB ＝ 40 − 2 ＝ 38　　PQ ＝ 19，即 Q 在 A 右邊 21<br>QN ＝ 28 − 21 ＝ 7 cm　　所以 QN ＝ 9 cm 或 7 cm",
+    build(){
+      return {pts:[{x:0,n:"A"},{x:2,n:"P"},{x:16,n:"C"},{x:21,n:"Q"},{x:28,n:"N"},{x:40,n:"B"}],
+              dims:[[0,2,"PA = 2",0.55],[21,28,"QN = 7",1.05],[2,40,"PB = 38",1.75]],
+              len:40};
+    }
+  },
+  q5: {
+    name:"Q5　中點與比例", btn:"Q5",
+    stem:"AB ＝ 30，C 是 AB 的中點，AD : DB ＝ 1 : 2。求 BC、AD、CD。",
+    ans:"BC ＝ 15　　AD ＝ 30 × &#8531; ＝ 10　　CD ＝ 15 − 10 ＝ 5",
+    build(){
+      return {pts:[{x:0,n:"A"},{x:10,n:"D"},{x:15,n:"C"},{x:30,n:"B"}],
+              dims:[[0,10,"AD = 10",0.55],[10,15,"CD = 5",1.05],[15,30,"BC = 15",0.55],[0,30,"AB = 30",1.55]],
+              len:30};
+    }
+  },
+  q6: {
+    name:"Q6　中點求長", btn:"Q6",
+    stem:"C、D 在線段 AB 上，D 是 AC 的中點。AB ＝ 10，BC ＝ 4，求 CD。",
+    ans:"AC ＝ 10 − 4 ＝ 6　　CD ＝ 6 ÷ 2 ＝ 3",
+    build(){
+      return {pts:[{x:0,n:"A"},{x:3,n:"D"},{x:6,n:"C"},{x:10,n:"B"}],
+              dims:[[0,3,"AD = 3",0.55],[3,6,"CD = 3",1.05],[6,10,"BC = 4",0.55],[0,10,"AB = 10",1.55]],
+              len:10};
+    }
+  },
+  q7: {
+    name:"Q7　四分之一", btn:"Q7",
+    stem:"點 B 在線段 AC 上，AB ＝ 28，BC 是 AB 的四分之一。（1）求 AC（2）O 是 AC 的中點，求 OB。",
+    ans:"BC ＝ 28 ÷ 4 ＝ 7　　AC ＝ 28 ＋ 7 ＝ 35<br>AO ＝ 35 ÷ 2 ＝ 17.5　　OB ＝ 28 − 17.5 ＝ 10.5",
+    build(){
+      return {pts:[{x:0,n:"A"},{x:17.5,n:"O"},{x:28,n:"B"},{x:35,n:"C"}],
+              dims:[[0,28,"AB = 28",0.55],[28,35,"BC = 7",0.55],[17.5,28,"OB = 10.5",1.05],[0,35,"AC = 35",1.55]],
+              len:35};
+    }
+  },
+  q8: {
+    name:"加深　比例與中點", btn:"加深",
+    stem:"C、D 在線段 AB 上，AC : CD : DB ＝ 2 : 3 : 3，M 是 AB 的中點，MA ＝ 3。（1）求 AB（2）N 是 AC 的中點，求 MN。",
+    ans:"AB ＝ 3 × 2 ＝ 6　　一份 ＝ 6 ÷ 8 ＝ 0.75<br>AC ＝ 1.5，AN ＝ 0.75　　MN ＝ 3 − 0.75 ＝ 2.25",
+    build(){
+      return {pts:[{x:0,n:"A"},{x:0.75,n:"N"},{x:1.5,n:"C"},{x:3,n:"M"},{x:3.75,n:"D"},{x:6,n:"B"}],
+              dims:[[0,1.5,"AC = 1.5",0.55],[1.5,3.75,"CD = 2.25",0.55],[3.75,6,"DB = 2.25",0.55],
+                    [0,0.75,"AN = 0.75",1.05],[0.75,3,"MN = 2.25",1.55],[0,3,"MA = 3",2.05]],
+              len:6};
+    }
+  }
+};
+function segScene(key){
+  const d = SEGCASES[key].build();
+  const W = 8.4, sc = W/d.len, x0 = -W/2;
+  const X = v => x0 + v*sc;
+  const B = [-5.2, -2.5, 5.2, 2.7];
+  const polys = () => {
+    const out = [seg(X(0), 0, X(d.len), 0, {color:"edge", w:3})];
+    d.pts.forEach(q => out.push(dot(X(q.x), 0, 0.11)));
+    return out;
+  };
+  const anns = () => d.dims.map(m => ({p1:[X(m[0]), m[3], 0], p2:[X(m[1]), m[3], 0], text:m[2]}));
+  const labels = () => d.pts.map(q => ({p:[X(q.x), 0, 0], text:q.n, dy:-26, size:20, box:false}));
+  return Object.assign({}, FLAT, {polys, labels, bounds:B,
+    anns: () => anns(), readout:{cap:"圖示", value: () => "", unit:""}});
+}
+
+/* 尺規作圖 */
+const RULER = {
+  eq:  {name:"作一線段等於已知線段", steps:["畫一條射線，端點記作 A",
+        "用圓規量度已知線段 a 的長度","以 A 為圓心、a 為半徑畫弧","弧與射線的交點就是 B，AB ＝ a"]},
+  sum: {name:"作 a ＋ b", steps:["畫射線，端點 A","以 A 為圓心、a 為半徑畫弧，得 C",
+        "以 C 為圓心、b 為半徑畫弧","交點就是 B，AB ＝ a ＋ b"]},
+  dif: {name:"作 a − b", steps:["畫射線，端點 A","以 A 為圓心、a 為半徑畫弧，得 C",
+        "以 C 為圓心、b 為半徑向回畫弧","交點就是 B，AB ＝ a − b"]},
+  dbl: {name:"作 2a", steps:["畫射線，端點 A","以 A 為圓心、a 為半徑畫弧，得 C",
+        "以 C 為圓心、a 為半徑再畫弧","交點就是 B，AB ＝ 2a"]}
+};
+function rulerScene(key){
+  const A = 2.6, Bl = 1.5;                      // 已知線段長度
+  const target = {eq:A, sum:A+Bl, dif:A-Bl, dbl:2*A}[key];
+  const first = A, second = {eq:0, sum:Bl, dif:-Bl, dbl:A}[key];
+  const B = [-5.0, -2.6, 5.0, 2.6];
+  const x0 = -3.4, y0 = 0.55;
+  const arc = (cx, cy, r, a0, a1) => {
+    const pts = [];
+    for(let i=0;i<=26;i++){ const a = a0 + (a1-a0)*i/26; pts.push([cx + r*Math.cos(a), cy + r*Math.sin(a), 0]); }
+    return {pts3:pts, outline:true, color:"accent", w:1.8};
+  };
+  const stepOf = t => Math.min(4, Math.max(1, Math.ceil(t*4 + 0.0001)));
+  const polys = t => {
+    const out = [];
+    // 已知線段
+    out.push(seg(-3.4, -1.85, -3.4 + A, -1.85, {color:"edge", w:3.4}));
+    out.push(dot(-3.4, -1.85, 0.09)); out.push(dot(-3.4 + A, -1.85, 0.09));
+    if(key !== "eq"){
+      out.push(seg(0.4, -1.85, 0.4 + Bl, -1.85, {color:"edge", w:3.4}));
+      out.push(dot(0.4, -1.85, 0.09)); out.push(dot(0.4 + Bl, -1.85, 0.09));
+    }
+    const st = stepOf(t);
+    if(st >= 1){
+      out.push(seg(x0, y0, 4.4, y0, {color:"edge", w:2.4}));
+      out.push(arrowHead(4.4, y0, [1,0], 0.22, "warn"));
+      out.push(dot(x0, y0, 0.11));
+    }
+    if(st >= 2) out.push(arc(x0, y0, first, -0.55, 0.55));
+    if(st >= 2 && key !== "eq") out.push(dot(x0 + first, y0, 0.10, "p1"));
+    if(st >= 3 && key !== "eq") out.push(arc(x0 + first, y0, Math.abs(second), -0.7, 0.7));
+    if(st >= 4){
+      out.push(dot(x0 + target, y0, 0.12));
+      out.push(seg(x0, y0, x0 + target, y0, {color:"accent", w:4}));
+    }
+    return out;
+  };
+  const labels = t => {
+    const st = stepOf(t), L = [];
+    L.push({p:[-3.4 + A/2, -1.85, 0], text:"a", dy:-24, size:19, box:false});
+    if(key !== "eq") L.push({p:[0.4 + Bl/2, -1.85, 0], text:"b", dy:-24, size:19, box:false});
+    if(st >= 1) L.push({p:[x0, y0, 0], text:"A", dy:-26, size:19, box:false});
+    if(st >= 2 && key !== "eq") L.push({p:[x0 + first, y0, 0], text:"C", dy:-26, size:19, box:false});
+    if(st >= 4) L.push({p:[x0 + target, y0, 0], text:"B", dy:-26, size:19, box:false});
+    L.push({p:[0, 2.1, 0], text:"第 " + st + " 步　" + RULER[key].steps[st-1], size:19});
+    return L;
+  };
+  return Object.assign({}, FLAT, {polys, labels, bounds:B,
+    readout:{cap:"步驟", value: t => stepOf(t), unit:"/ 4"}});
+}
+
 /* ==================== 十一種展開圖 ==================== */
 const NETS = {
   "一四一": [
@@ -1219,13 +1935,18 @@ function matGrid(mat){
 /* ==================== 各題內容 ==================== */
 const state = { netKey:"一四一", netIdx:0, pairs:false, q19:"A", prism:"C", round:"cyl",
                 q15:"cone", build:[[2,1],[1,2],[2,2],[3,2],[2,3],[2,4]],
-                solid:"cuboid", part:null, spin:"rect", q13:"A", foldLines:false,
+                solid:"cuboid", part:null, spin:"rect", q13:"A", foldLines:false, prismN:9, twoPt:"one", crossMode:"cross", countRay:false, cake3:"h", q37Marks:false, segCase:"q5", ruler:"eq",
                 showV:{front:false, side:false, top:false} };
 
 const Q10_H = [[1,1,2],[0,0,1]];
 const Q11_H = [[0,1,0],[1,2,1]];
 const Q12_H = [[0,1,0,0],[0,1,0,0],[1,3,1,1]];
 
+const SECTIONS = [
+  {id:"s61", t:"6.1　幾何圖形"},
+  {id:"s62", t:"6.2　直線・射線・線段"},
+  {id:"tools", t:"工具"}
+];
 const TABS = [
   {id:"q8",  q:"Q8",  t:"圓柱與長方體"},
   {id:"q9",  q:"Q9",  t:"截去一角"},
@@ -1241,20 +1962,70 @@ const TABS = [
   {id:"q19", q:"Q19", t:"三個圖案"},
   {id:"q20", q:"Q20", t:"無蓋盒子"},
   {sep:true},
-  {id:"nets",  q:"工具", t:"十一種展開圖"},
-  {id:"build", q:"工具", t:"六格試摺"},
-  {sep:true},
-  {id:"parts", q:"6.1.2", t:"面・棱・頂點"},
-  {id:"sweep", q:"6.1.2", t:"點動成線"},
-  {id:"spin",  q:"6.1.2", t:"面動成體"},
-  {id:"cut",   q:"6.1.2", t:"截面"}
+  {id:"nets",  q:"工具", t:"十一種展開圖", s:"tools"},
+  {id:"build", q:"工具", t:"六格試摺",     s:"tools"},
+  {id:"parts", q:"認識", t:"面・棱・頂點", s:"s61"},
+  {id:"sweep", q:"Q21",  t:"點動成線",     s:"s61"},
+  {id:"spin",  q:"Q22-24", t:"面動成體",   s:"s61"},
+  {id:"cut",   q:"Q35",  t:"截圓柱",       s:"s61"},
+  {id:"q36",   q:"Q36",  t:"階梯體數面",   s:"s61"},
+  {id:"q37",   q:"Q37",  t:"九棱柱側面積", s:"s61"},
+  {id:"line3", q:"基本", t:"直線・射線・線段", s:"s62"},
+  {id:"twopt", q:"基本", t:"兩點定一線",   s:"s62"},
+  {id:"cross", q:"Q13-15", t:"交點與分塊", s:"s62"},
+  {id:"count", q:"Q17,19", t:"數線段射線", s:"s62"},
+  {id:"segc",  q:"Q2-7", t:"線段計算",     s:"s62"},
+  {id:"cake3", q:"補充", t:"立體切蛋糕",   s:"s62"},
+  {id:"ruler", q:"補充", t:"尺規作圖",     s:"s62"}
 ];
+TABS.forEach(x => { if(!x.sep && !x.s) x.s = "s61"; });
 let tab = "q8";
+let section = "s61";
 
 const nav = document.getElementById("tabs");
-nav.innerHTML = TABS.map(x => x.sep ? '<span class="sep"></span>' :
-  '<button role="tab" data-id="' + x.id + '" aria-selected="' + (x.id === tab) + '">' +
-  '<span class="q">' + x.q + '</span><span class="t">' + x.t + '</span></button>').join("");
+const hamBtn  = document.getElementById("hamBtn");
+const hamLbl  = document.getElementById("hamLbl");
+const secMenu = document.getElementById("secMenu");
+function renderSecMenu(){
+  const cur = SECTIONS.filter(x => x.id === section)[0] || SECTIONS[0];
+  hamLbl.textContent = cur.t;
+  secMenu.innerHTML = SECTIONS.map(x =>
+    '<button type="button" data-sec="' + x.id + '" aria-selected="' + (x.id === section) + '">' + x.t + '</button>').join("");
+}
+function closeSecMenu(){ secMenu.hidden = true; hamBtn.setAttribute("aria-expanded", "false"); }
+function renderTabs(){
+  nav.innerHTML = TABS.filter(x => !x.sep && x.s === section).map(x =>
+    '<button role="tab" data-id="' + x.id + '" aria-selected="' + (x.id === tab) + '">' +
+    '<span class="q">' + x.q + '</span><span class="t">' + x.t + '</span></button>').join("");
+}
+renderSecMenu();
+renderTabs();
+hamBtn.addEventListener("click", e => {
+  e.stopPropagation();
+  const open = secMenu.hidden;
+  secMenu.hidden = !open;
+  hamBtn.setAttribute("aria-expanded", String(open));
+});
+document.addEventListener("click", e => {
+  if(!secMenu.hidden && !secMenu.contains(e.target) && e.target !== hamBtn) closeSecMenu();
+});
+document.addEventListener("keydown", e => { if(e.key === "Escape") closeSecMenu(); });
+secMenu.addEventListener("click", e => {
+  const b = e.target.closest("button[data-sec]");
+  if(!b) return;
+  closeSecMenu();
+  hamBtn.blur();
+  if(b.dataset.sec === section) return;
+  section = b.dataset.sec;
+  renderSecMenu();
+  const first = TABS.filter(x => !x.sep && x.s === section)[0];
+  if(first){
+    tab = first.id;
+    state.showV = {front:false, side:false, top:false};
+    renderTabs();
+    buildTab();
+  }
+});
 nav.addEventListener("wheel", e => {
   if(nav.scrollWidth <= nav.clientWidth + 1) return;
   if(Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;   // 本身已經係橫向捲動就唔干預
@@ -1612,6 +2383,171 @@ function buildTab(){
       answer('<b>B</b>　長方形。');
   }
 
+  else if(tab === "q36"){
+    scene = q36Scene();
+    noteEl.textContent = "Q36　正方體截去一塊之後的階梯體";
+    railHtml =
+      stem("如圖所示的幾何體是由一個正方體截去後形成的，這個幾何體是由＿＿個面圍成的，其中正方形有＿＿個，長方形有＿＿個。") +
+      panel("怎樣數", rules([
+        "八個面已經按形狀分了三種顏色：<strong>藍色是正方形</strong>、<strong>紫色是長方形</strong>、<strong>綠色是 L 形</strong>。",
+        "轉一轉看背面：底面和後面各是一個 2×2 的正方形，一共 2 個。",
+        "台階由四塊 2×1 的長方形圍出來；左右兩塊是 L 形，既不是正方形也不是長方形。"
+      ])) +
+      answer('<b>8 個面</b>　其中正方形 2 個、長方形 4 個，另外兩個是 L 形。');
+  }
+
+  else if(tab === "q37"){
+    scene = q37Scene(state.prismN, state.q37Marks);
+    noteEl.textContent = "拉動滑桿把側面攤平　" + state.prismN + " 棱柱：側面 " + state.prismN + " 個，底面 2 個";
+    railHtml =
+      stem("已知一直棱柱共有 11 個面，底面邊長都相等，側棱長 10 厘米，側面積 180 平方厘米。（1）它是幾棱柱？（2）底面邊長是多少？") +
+      panel("換個 n 看看", '<div class="opts">' + [5,7,9,11].map(k =>
+        '<button data-act="pn:' + k + '" aria-pressed="' + (state.prismN === k) + '">' + k + ' 棱柱</button>').join("") +
+        '</div><p style="margin-top:9px">' + state.prismN + ' 棱柱：<strong>啡色是側面</strong> ' + state.prismN +
+        ' 個，<strong>綠色是底面</strong> 2 個，共 ' + (state.prismN + 2) + ' 個面。</p>') +
+      panel("標示", '<div class="opts">' +
+        '<button data-act="q37marks" aria-pressed="' + state.q37Marks + '">標出棱長與面積</button></div>' +
+        '<p style="margin-top:9px">攤平之後才會顯示總闊度和側面積。</p>') +
+      panel("攤平之後", rules([
+        "側面攤平是<strong>一個長方形</strong>：闊 ＝ " + state.prismN + " 條底邊接起來，高 ＝ 側棱長。",
+        "所以側面積 ＝ 底面周長 × 側棱長，不用逐個長方形加。",
+        "兩個底面摺上摺落，攤平時貼在長方形的上下，合共 " + (state.prismN + 2) + " 個面。"
+      ])) +
+      panel("兩步", rules([
+        "由面數求 n：n ＋ 2 ＝ 11，所以 n ＝ 9，是<strong>九棱柱</strong>。",
+        "側面是 9 個一樣大的長方形，每個是「底邊長 × 側棱長」，所以側面積 ＝ 9 × 底邊長 × 10。",
+        "9 × 底邊長 × 10 ＝ 180，得底邊長 ＝ <strong>2 厘米</strong>。"
+      ])) +
+      panel("要注意", '<p>工作紙印住「180 平方<strong>米</strong>」，讀題時要改讀「180 平方<strong>厘米</strong>」，否則和側棱長 10 厘米對不上。</p>') +
+      answer('（1）<b>九棱柱</b>　　（2）底邊長 <b>2 厘米</b>');
+  }
+
+  else if(tab === "line3"){
+    scene = line3Scene();
+    noteEl.textContent = "拉動滑桿，看它們向外延伸";
+    railHtml =
+      stem("填表：直線、射線、線段的表示方法、延伸情況、端點個數、可否度量。") +
+      panel("三個分別", '<table style="width:100%; border-collapse:collapse; font-size:15.5px">' +
+        '<tr><td style="padding:5px 0; color:var(--mute)">　</td><td style="color:var(--mute)">延伸</td>' +
+        '<td style="color:var(--mute)">端點</td><td style="color:var(--mute)">可否度量</td></tr>' +
+        '<tr><td style="padding:5px 0"><strong>直線</strong></td><td>兩方無限</td><td>0 個</td><td>不可</td></tr>' +
+        '<tr><td style="padding:5px 0"><strong>射線</strong></td><td>一方無限</td><td>1 個</td><td>不可</td></tr>' +
+        '<tr><td style="padding:5px 0"><strong>線段</strong></td><td>不延伸</td><td>2 個</td><td>可以</td></tr>' +
+        '</table>') +
+      panel("表示方法", rules([
+        "直線可以寫 <strong>直線 AB</strong>，也可以用一個小寫字母寫 <strong>直線 l</strong>。",
+        "射線一定要把<strong>端點寫在前面</strong>：射線 AB 和射線 BA 不是同一條。",
+        "線段 AB 和線段 BA 是同一條，因為兩端都是端點。"
+      ]));
+  }
+
+  else if(tab === "twopt"){
+    scene = twoPtScene(state.twoPt);
+    noteEl.textContent = state.twoPt === "one" ? "只有一個點" : "有兩個點";
+    railHtml =
+      stem("＿＿＿＿確定一條直線。") +
+      panel("試兩次", '<div class="opts">' +
+        '<button data-act="tp:one" aria-pressed="' + (state.twoPt === "one") + '">只有一個點</button>' +
+        '<button data-act="tp:two" aria-pressed="' + (state.twoPt === "two") + '">有兩個點</button></div>') +
+      panel("看到甚麼", rules([
+        "只有一個點：直線可以轉到任何方向，畫幾多條都得，所以是<strong>無數條</strong>。",
+        "有兩個點：直線被兩點鎖死，只有<strong>一條</strong>。",
+        "所以課本那一句是「<span class=\"em\">兩點確定一條直線</span>」。"
+      ])) +
+      answer('<b>兩點</b>確定一條直線。<br>工作紙那條「把一根細木條固定在牆上，至少需要幾個釘子」＝ <b>2 個</b>，同一個道理：一個釘子木條會轉。');
+  }
+
+  else if(tab === "cross"){
+    scene = crossScene(state.crossMode);
+    noteEl.textContent = state.crossMode === "cross" ? "直線兩兩相交，最多幾多個交點" : "切幾刀，最多分成幾多塊";
+    railHtml =
+      stem(state.crossMode === "cross"
+        ? "同一平面內，4 條直線兩兩相交，交點個數最多有幾多個？10 條呢？"
+        : "將一塊等邊三角形蛋糕切三次，最多能分成的塊數為幾多？") +
+      panel("兩個玩法", '<div class="opts">' +
+        '<button data-act="cm:cross" aria-pressed="' + (state.crossMode === "cross") + '">數交點</button>' +
+        '<button data-act="cm:cut" aria-pressed="' + (state.crossMode === "cut") + '">數塊數</button></div>') +
+      panel(state.crossMode === "cross" ? "規律" : "規律", rules(
+        state.crossMode === "cross"
+          ? ["每加一條直線，它最多同<strong>之前每一條</strong>各交一次，所以每次多加的交點就是「之前的條數」。",
+             "1 條 0 個、2 條 1 個、3 條 3 個、4 條 6 個、5 條 10 個。",
+             "公式：<strong>n(n−1) ÷ 2</strong>。10 條 → 10×9÷2 ＝ <span class=\"em\">45 個</span>。"]
+          : ["每加一刀，最多穿過之前所有的刀，把每一段都再切開一次。",
+             "1 刀 2 塊、2 刀 4 塊、3 刀 7 塊、4 刀 11 塊。",
+             "公式：<strong>1 ＋ n ＋ n(n−1) ÷ 2</strong>。三刀 → 1＋3＋3 ＝ <span class=\"em\">7 塊</span>。"])) +
+      answer(state.crossMode === "cross"
+        ? '4 條 → <b>6 個</b>；10 條 → <b>45 個</b>。三條直線的交點個數可能是 0、1、2 或 3 個。'
+        : '三刀最多分成 <b>7 塊</b>。<br>這個答案的前提是每一刀都垂直切到底。若容許水平橫切，見「立體切蛋糕」那一頁。');
+  }
+
+  else if(tab === "count"){
+    scene = countScene(state.countRay);
+    noteEl.textContent = state.countRay
+      ? "拉動滑桿加點，下面逐條列出所有射線"
+      : "拉動滑桿加點，下面逐條列出所有線段";
+    railHtml =
+      stem("在一條直線上取兩個點 A、B，共得＿＿條線段，＿＿條射線。") +
+      panel("數哪一種", '<div class="opts">' +
+        '<button data-act="cn:seg" aria-pressed="' + (!state.countRay) + '">數線段</button>' +
+        '<button data-act="cn:ray" aria-pressed="' + (state.countRay) + '">數射線</button></div>') +
+      panel("兩條規律", rules([
+        "線段：任何<strong>兩點</strong>之間就是一條，所以是 <strong>n(n−1) ÷ 2</strong> 條。",
+        "射線：每個點向左向右各一條，所以是 <strong>2n</strong> 條。",
+        "留意射線要寫端點在前，同一個點的兩條射線方向相反，是不同的兩條。"
+      ])) +
+      answer('2 個點 → 線段 <b>1</b> 條，射線 <b>4</b> 條。<br>3 個點 → 線段 3 條，射線 6 條；4 個點 → 線段 6 條，射線 8 條。');
+  }
+
+  else if(tab === "segc"){
+    const d = SEGCASES[state.segCase];
+    scene = segScene(state.segCase);
+    noteEl.textContent = d.name;
+    railHtml =
+      panel("揀一題", '<div class="opts">' + Object.keys(SEGCASES).map(k =>
+        '<button data-act="sc:' + k + '" aria-pressed="' + (state.segCase === k) + '">' + (SEGCASES[k].btn || SEGCASES[k].name) + '</button>').join("") + '</div>') +
+      stem(d.stem) +
+      panel("做法", rules([
+        "先把圖畫出來，把已知的長度標在圖上，未知的用問號。",
+        "中點的意思是把一條線段分成<strong>相等的兩半</strong>，所以見到中點就可以除 2。",
+        "三點共線但沒有圖的時候，一定要問：第三點在<strong>裡面還是外面</strong>，兩種情況都要答。Q3 和 Q4(3) 都是這一類。",
+        "拉動滑桿可以把尺寸標示收起，留一幅淨圖給學生自己標。"
+      ])) +
+      answer(d.ans);
+  }
+
+  else if(tab === "cake3"){
+    scene = cake3Scene(state.cake3);
+    noteEl.textContent = state.cake3 === "v3" ? "三刀都垂直切到底" : "兩刀垂直，第三刀水平橫切";
+    railHtml =
+      stem("上一頁那條蛋糕題答 7 塊，前提是每一刀都垂直切到底。如果容許水平橫切一刀，答案會不同。") +
+      panel("兩種切法", '<div class="opts">' +
+        '<button data-act="ck:v3" aria-pressed="' + (state.cake3 === "v3") + '">三刀都垂直</button>' +
+        '<button data-act="ck:h" aria-pressed="' + (state.cake3 === "h") + '">兩刀垂直＋一刀水平</button></div>') +
+      panel("看到甚麼", rules([
+        "拉動滑桿把切開的塊逐漸分開，每一塊上面有編號，可以逐塊數。",
+        "三刀都垂直，等於平面上三條直線分平面，最多 <strong>7 塊</strong>。",
+        "兩刀垂直切成 4 份，第三刀水平把每一份再一分為二，就是 <strong>8 塊</strong>。",
+        "立體的公式是 1 ＋ n ＋ n(n−1) ÷ 2 ＋ n(n−1)(n−2) ÷ 6：1 刀 2 塊、2 刀 4 塊、3 刀 8 塊、4 刀 15 塊。"
+      ])) +
+      answer('工作紙那題限定刀刀垂直，所以答 <b>7 塊</b>。<br>若容許水平切，三刀最多 <b>8 塊</b>：水平那一刀同時穿過前兩刀切出的 4 個區域，比垂直切時多穿過一個。');
+  }
+
+  else if(tab === "ruler"){
+    scene = rulerScene(state.ruler);
+    noteEl.textContent = RULER[state.ruler].name;
+    railHtml =
+      panel("揀一種", '<div class="opts">' + Object.keys(RULER).map(k =>
+        '<button data-act="rl:' + k + '" aria-pressed="' + (state.ruler === k) + '">' + RULER[k].name + '</button>').join("") + '</div>') +
+      stem("尺規作圖：只准用沒有刻度的直尺和圓規，作圖痕跡要保留。") +
+      panel("四步", RULER[state.ruler].steps.map((x,i) =>
+        '<div class="rule"><i>' + (i+1) + '</i><span>' + x + '</span></div>').join("")) +
+      panel("常見扣分位", rules([
+        "圓弧擦走了：<strong>作圖痕跡一定要留</strong>，那是評分的依據。",
+        "用直尺上的刻度量長度：尺規作圖只准用圓規移動長度。",
+        "射線畫得太短，弧和射線交不到，結果沒有交點。"
+      ]));
+  }
+
   else if(tab === "nets"){
     const cells = NETS[state.netKey][state.netIdx];
     const st = netStatus(cells);
@@ -1722,6 +2658,14 @@ function bindRail(){
     else if(a.indexOf("part:") === 0){ const v = a.slice(5); state.part = (state.part === v) ? null : v; }
     else if(a.indexOf("spin:") === 0){ state.spin = a.slice(5); }
     else if(a === "lines"){ state.foldLines = !state.foldLines; }
+    else if(a.indexOf("pn:") === 0){ state.prismN = +a.slice(3); }
+    else if(a.indexOf("tp:") === 0){ state.twoPt = a.slice(3); }
+    else if(a.indexOf("cm:") === 0){ state.crossMode = a.slice(3); }
+    else if(a.indexOf("cn:") === 0){ state.countRay = (a.slice(3) === "ray"); }
+    else if(a.indexOf("ck:") === 0){ state.cake3 = a.slice(3); }
+    else if(a === "q37marks"){ state.q37Marks = !state.q37Marks; }
+    else if(a.indexOf("sc:") === 0){ state.segCase = a.slice(3); }
+    else if(a.indexOf("rl:") === 0){ state.ruler = a.slice(3); }
     else { state.build = presets[a].map(c => c.slice()); }
     buildTab();
   });
@@ -1762,12 +2706,14 @@ function buildControls(){
 let foldAnim = null;
 function setT(v){
   T = Math.max(0, Math.min(1, v));
+  const cst = (scene && scene.camStart) || [0, 0];
   const end = (scene && scene.camEnd) || [-0.42, -0.58];
   const sl = document.getElementById("slider"), dg = document.getElementById("deg");
   if(sl) sl.value = Math.round(T*1000);
   if(dg) dg.textContent = (scene.readout ? scene.readout.value(T) : Math.round(ease(T)*90));
   const te = ease(T);
-  camBase.rx = end[0]*te; camBase.ry = end[1]*te;
+  if(scene && scene.flat){ camBase.rx = 0; camBase.ry = 0; camOff.rx = 0; camOff.ry = 0; }
+  else { camBase.rx = cst[0] + (end[0]-cst[0])*te; camBase.ry = cst[1] + (end[1]-cst[1])*te; }
   applyCam();
   draw();
 }
@@ -1832,11 +2778,12 @@ document.addEventListener("keydown", e => {
 });
 
 cv.addEventListener("pointerdown", e => {
+  if(scene && scene.flat) return;
   dragOn = true; lastX = e.clientX; lastY = e.clientY;
   cv.setPointerCapture(e.pointerId);
 });
 cv.addEventListener("pointermove", e => {
-  if(!dragOn) return;
+  if(!dragOn || (scene && scene.flat)) return;
   const dx = (e.clientX - lastX)*0.008, dy = (e.clientY - lastY)*0.008;
   lastX = e.clientX; lastY = e.clientY;
   camOff.rx = Math.max(-1.6, Math.min(1.6, camOff.rx + dy));
@@ -1854,4 +2801,6 @@ document.getElementById("resetAll").onclick = () => {
 new ResizeObserver(() => draw()).observe(cv);
 buildTab();
 </script>
-</body></html>
+
+</body>
+</html>
