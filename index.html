@@ -534,7 +534,7 @@ function draw(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,w,h);
 
-  const te = ease(T);
+  const te = scene.linear ? T : ease(T);
   const polys = scene.polys(te);
   const anns = scene.anns ? scene.anns(te) : [];
   const M = mMul(mRotX(cam.rx), mRotY(cam.ry));
@@ -574,8 +574,9 @@ function draw(){
   ctx.stroke();
 
   // 尺寸線
-  if(camAnn.length && te < 0.995){
-    ctx.globalAlpha = 1 - te;
+  const annA = scene.stepped ? 1 : 1 - te;           // 逐步題目的標示不淡出
+  if(camAnn.length && annA > 0.005){
+    ctx.globalAlpha = annA;
     ctx.strokeStyle = C.accent; ctx.fillStyle = C.accent; ctx.lineWidth = 1.5;
     ctx.font = '500 15px "IBM Plex Mono", monospace';
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -1701,7 +1702,11 @@ const SEGCASES = {
     build(){
       return {pts:[{x:0,n:"A"},{x:1,n:"C"},{x:2,n:"D"},{x:4,n:"B"}],
               dims:[[0,1,"AC = a",0.55],[1,2,"CD = a",0.55],[2,4,"DB = 2a",0.55],
-                    [1,4,"CB = 3a",1.15],[0,4,"AB = 4a",1.75]],
+                    [1,4,"CB = 3a",1.15],[0,4,"AB = 4a",1.75],[0,2,"AD = 2a",0.55]],
+              steps:[["已知 AB ＝ 4a", "AB", [4]],
+                     ["D 是 AB 的中點 → AD ＝ DB ＝ 2a", "ADB", [5,2,4]],
+                     ["C 是 AD 的中點 → AC ＝ CD ＝ a", "ACDB", [0,1,2,4]],
+                     ["CB ＝ AB − AC ＝ 4a − a ＝ 3a", "ACDB", [0,1,2,3,4]]],
               len:4};
     }
   },
@@ -1712,6 +1717,9 @@ const SEGCASES = {
     build(){
       return {pts:[{x:0,n:"A"},{x:20,n:"B"},{x:28,n:"C"}],
               dims:[[0,20,"AB = 20",0.55],[20,28,"BC = 8",0.55],[0,28,"AC = 28",1.15]],
+              steps:[["已知 AB ＝ 20", "AB", [0]],
+                     ["C 在 B 的外側，BC ＝ 8", "ABC", [0,1]],
+                     ["AC ＝ AB ＋ BC ＝ 20 ＋ 8 ＝ 28 cm", "ABC", [0,1,2]]],
               len:28};
     }
   },
@@ -1722,6 +1730,9 @@ const SEGCASES = {
     build(){
       return {pts:[{x:0,n:"A"},{x:12,n:"C"},{x:20,n:"B"}],
               dims:[[0,12,"AC = 12",0.55],[12,20,"CB = 8",0.55],[0,20,"AB = 20",1.15]],
+              steps:[["已知 AB ＝ 20", "AB", [2]],
+                     ["C 在 A、B 之間，BC ＝ 8", "ACB", [1,2]],
+                     ["AC ＝ AB − BC ＝ 20 − 8 ＝ 12 cm", "ACB", [0,1,2]]],
               len:20};
     }
   },
@@ -1732,7 +1743,13 @@ const SEGCASES = {
     build(){
       return {pts:[{x:0,n:"A"},{x:16,n:"C"},{x:20,n:"M"},{x:28,n:"N"},{x:40,n:"B"}],
               dims:[[0,16,"AC = 16",0.55],[16,28,"CN = 12",1.05],[28,40,"NB = 12",1.05],
-                    [20,28,"MN = 8",1.55],[0,40,"AB = 40",2.05]],
+                    [20,28,"MN = 8",1.55],[0,40,"AB = 40",2.05],
+                    [16,40,"BC = 24",1.05],[0,20,"AM = 20",1.55]],
+              steps:[["已知 AB ＝ 40，AC ＝ 16", "ACB", [0,4]],
+                     ["BC ＝ AB − AC ＝ 40 − 16 ＝ 24", "ACB", [0,5,4]],
+                     ["N 是 BC 的中點 → BN ＝ 24 ÷ 2 ＝ 12 cm", "ACNB", [0,1,2,4]],
+                     ["M 是 AB 的中點 → AM ＝ 40 ÷ 2 ＝ 20", "ACMNB", [0,1,2,6,4]],
+                     ["MN ＝ AN − AM ＝ 28 − 20 ＝ 8 cm", "ACMNB", [0,1,2,3,4]]],
               len:40};
     }
   },
@@ -1742,7 +1759,12 @@ const SEGCASES = {
     ans:"P 在 A 外側：PB ＝ 2 ＋ 40 ＝ 42　　PQ ＝ 21，即 Q 在 A 右邊 19<br>QN ＝ 28 − 19 ＝ 9 cm",
     build(){
       return {pts:[{x:0,n:"P"},{x:2,n:"A"},{x:18,n:"C"},{x:21,n:"Q"},{x:30,n:"N"},{x:42,n:"B"}],
-              dims:[[0,2,"PA = 2",0.55],[21,30,"QN = 9",1.05],[0,42,"PB = 42",1.75]],
+              dims:[[0,2,"PA = 2",0.55],[21,30,"QN = 9",1.05],[0,42,"PB = 42",1.75],
+                    [0,21,"PQ = 21",1.05],[2,30,"AN = 28",1.05]],
+              steps:[["承上題：AN ＝ 28", "ACNB", [4]],
+                     ["P 在 A 外側，PA ＝ 2 → PB ＝ 2 ＋ 40 ＝ 42", "PACNB", [0,2]],
+                     ["Q 是 BP 的中點 → PQ ＝ 21，即 AQ ＝ 19", "PACQNB", [0,3,2]],
+                     ["QN ＝ AN − AQ ＝ 28 − 19 ＝ 9 cm", "PACQNB", [0,1,2]]],
               len:42};
     }
   },
@@ -1752,7 +1774,12 @@ const SEGCASES = {
     ans:"P 在 A 右邊：PB ＝ 40 − 2 ＝ 38　　PQ ＝ 19，即 Q 在 A 右邊 21<br>QN ＝ 28 − 21 ＝ 7 cm　　所以 QN ＝ 9 cm 或 7 cm",
     build(){
       return {pts:[{x:0,n:"A"},{x:2,n:"P"},{x:16,n:"C"},{x:21,n:"Q"},{x:28,n:"N"},{x:40,n:"B"}],
-              dims:[[0,2,"PA = 2",0.55],[21,28,"QN = 7",1.05],[2,40,"PB = 38",1.75]],
+              dims:[[0,2,"PA = 2",0.55],[21,28,"QN = 7",1.05],[2,40,"PB = 38",1.75],
+                    [2,21,"PQ = 19",1.05],[0,28,"AN = 28",1.05]],
+              steps:[["承上題：AN ＝ 28", "ACNB", [4]],
+                     ["P 在 A 右邊，PA ＝ 2 → PB ＝ 40 − 2 ＝ 38", "APCNB", [0,2]],
+                     ["Q 是 BP 的中點 → PQ ＝ 19，即 AQ ＝ 21", "APCQNB", [0,3,2]],
+                     ["QN ＝ AN − AQ ＝ 28 − 21 ＝ 7 cm", "APCQNB", [0,1,2]]],
               len:40};
     }
   },
@@ -1763,6 +1790,10 @@ const SEGCASES = {
     build(){
       return {pts:[{x:0,n:"A"},{x:10,n:"D"},{x:15,n:"C"},{x:30,n:"B"}],
               dims:[[0,10,"AD = 10",0.55],[10,15,"CD = 5",1.05],[15,30,"BC = 15",0.55],[0,30,"AB = 30",1.55]],
+              steps:[["已知 AB ＝ 30", "AB", [3]],
+                     ["C 是 AB 的中點 → BC ＝ 30 ÷ 2 ＝ 15", "ACB", [2,3]],
+                     ["AD : DB ＝ 1 : 2 → AD ＝ 30 × ⅓ ＝ 10", "ADCB", [0,2,3]],
+                     ["CD ＝ AC − AD ＝ 15 − 10 ＝ 5", "ADCB", [0,1,2,3]]],
               len:30};
     }
   },
@@ -1772,7 +1803,11 @@ const SEGCASES = {
     ans:"AC ＝ 10 − 4 ＝ 6　　CD ＝ 6 ÷ 2 ＝ 3",
     build(){
       return {pts:[{x:0,n:"A"},{x:3,n:"D"},{x:6,n:"C"},{x:10,n:"B"}],
-              dims:[[0,3,"AD = 3",0.55],[3,6,"CD = 3",1.05],[6,10,"BC = 4",0.55],[0,10,"AB = 10",1.55]],
+              dims:[[0,3,"AD = 3",0.55],[3,6,"CD = 3",1.05],[6,10,"BC = 4",0.55],[0,10,"AB = 10",1.55],
+                    [0,6,"AC = 6",0.55]],
+              steps:[["已知 AB ＝ 10，BC ＝ 4", "ACB", [2,3]],
+                     ["AC ＝ AB − BC ＝ 10 − 4 ＝ 6", "ACB", [4,2,3]],
+                     ["D 是 AC 的中點 → CD ＝ 6 ÷ 2 ＝ 3", "ADCB", [0,1,2,3]]],
               len:10};
     }
   },
@@ -1782,7 +1817,12 @@ const SEGCASES = {
     ans:"BC ＝ 28 ÷ 4 ＝ 7　　AC ＝ 28 ＋ 7 ＝ 35<br>AO ＝ 35 ÷ 2 ＝ 17.5　　OB ＝ 28 − 17.5 ＝ 10.5",
     build(){
       return {pts:[{x:0,n:"A"},{x:17.5,n:"O"},{x:28,n:"B"},{x:35,n:"C"}],
-              dims:[[0,28,"AB = 28",0.55],[28,35,"BC = 7",0.55],[17.5,28,"OB = 10.5",1.05],[0,35,"AC = 35",1.55]],
+              dims:[[0,28,"AB = 28",0.55],[28,35,"BC = 7",0.55],[17.5,28,"OB = 10.5",1.05],[0,35,"AC = 35",1.55],
+                    [0,17.5,"AO = 17.5",1.05]],
+              steps:[["已知 AB ＝ 28", "AB", [0]],
+                     ["BC ＝ 28 ÷ 4 ＝ 7 → AC ＝ 28 ＋ 7 ＝ 35", "ABC", [0,1,3]],
+                     ["O 是 AC 的中點 → AO ＝ 35 ÷ 2 ＝ 17.5", "AOBC", [0,1,4,3]],
+                     ["OB ＝ AB − AO ＝ 28 − 17.5 ＝ 10.5", "AOBC", [0,1,2,3]]],
               len:35};
     }
   },
@@ -1793,7 +1833,12 @@ const SEGCASES = {
     build(){
       return {pts:[{x:0,n:"A"},{x:0.75,n:"N"},{x:1.5,n:"C"},{x:3,n:"M"},{x:3.75,n:"D"},{x:6,n:"B"}],
               dims:[[0,1.5,"AC = 1.5",0.55],[1.5,3.75,"CD = 2.25",0.55],[3.75,6,"DB = 2.25",0.55],
-                    [0,0.75,"AN = 0.75",1.05],[0.75,3,"MN = 2.25",1.55],[0,3,"MA = 3",2.05]],
+                    [0,0.75,"AN = 0.75",1.05],[0.75,3,"MN = 2.25",1.55],[0,3,"MA = 3",2.05],
+                    [0,6,"AB = 6",1.05]],
+              steps:[["M 是 AB 的中點，MA ＝ 3 → AB ＝ 3 × 2 ＝ 6", "AMB", [5,6]],
+                     ["AC : CD : DB ＝ 2 : 3 : 3，一份 ＝ 6 ÷ 8 ＝ 0.75", "ACMDB", [0,1,2,5]],
+                     ["N 是 AC 的中點 → AN ＝ 1.5 ÷ 2 ＝ 0.75", "ANCMDB", [0,1,2,3,5]],
+                     ["MN ＝ MA − AN ＝ 3 − 0.75 ＝ 2.25", "ANCMDB", [0,1,2,3,4,5]]],
               len:6};
     }
   }
@@ -1803,15 +1848,28 @@ function segScene(key){
   const W = 8.4, sc = W/d.len, x0 = -W/2;
   const X = v => x0 + v*sc;
   const B = [-5.2, -2.5, 5.2, 2.7];
-  const polys = () => {
-    const out = [seg(X(0), 0, X(d.len), 0, {color:"edge", w:3})];
-    d.pts.forEach(q => out.push(dot(X(q.x), 0, 0.11)));
+  const N = d.steps.length;
+  const stepOf = t => Math.min(N, Math.max(1, Math.ceil(t*N + 0.0001)));
+  // steps 每一項：[說明, 這一步看得見的點, 這一步顯示的尺寸線編號]
+  const ptsAt = t => { const s = d.steps[stepOf(t)-1]; return d.pts.filter(q => s[1].indexOf(q.n) >= 0); };
+  const polys = t => {
+    const P = ptsAt(t), xs = P.map(q => q.x);
+    const out = [seg(X(Math.min.apply(null, xs)), 0, X(Math.max.apply(null, xs)), 0, {color:"edge", w:3})];
+    P.forEach(q => out.push(dot(X(q.x), 0, 0.11)));
     return out;
   };
-  const anns = () => d.dims.map(m => ({p1:[X(m[0]), m[3], 0], p2:[X(m[1]), m[3], 0], text:m[2]}));
-  const labels = () => d.pts.map(q => ({p:[X(q.x), 0, 0], text:q.n, dy:-26, size:20, box:false}));
-  return Object.assign({}, FLAT, {polys, labels, bounds:B,
-    anns: () => anns(), readout:{cap:"圖示", value: () => "", unit:""}});
+  const anns = t => d.steps[stepOf(t)-1][2].map(i => {
+    const m = d.dims[i];
+    return {p1:[X(m[0]), m[3], 0], p2:[X(m[1]), m[3], 0], text:m[2]};
+  });
+  const labels = t => {
+    const st = stepOf(t);
+    const L = ptsAt(t).map(q => ({p:[X(q.x), 0, 0], text:q.n, dy:-26, size:20, box:false}));
+    L.push({p:[0, -1.75, 0], text:"第 " + st + " 步　" + d.steps[st-1][0], size:19});
+    return L;
+  };
+  return Object.assign({}, FLAT, {polys, labels, anns, bounds:B, linear:true, stepped:N,
+    readout:{cap:"步驟", value: t => stepOf(t), unit:"/ " + N}});
 }
 
 /* 尺規作圖 */
@@ -2510,7 +2568,7 @@ function buildTab(){
         "先把圖畫出來，把已知的長度標在圖上，未知的用問號。",
         "中點的意思是把一條線段分成<strong>相等的兩半</strong>，所以見到中點就可以除 2。",
         "三點共線但沒有圖的時候，一定要問：第三點在<strong>裡面還是外面</strong>，兩種情況都要答。Q3 和 Q4(3) 都是這一類。",
-        "拉動滑桿可以把尺寸標示收起，留一幅淨圖給學生自己標。"
+        "按「播放」或 <kbd>→</kbd> 逐步顯示解題過程，每一步加上一個點或一段長度；按「重設」回到第一步。"
       ])) +
       answer(d.ans);
   }
@@ -2690,7 +2748,7 @@ function buildControls(){
       '<button class="act" id="play">播放</button>' +
       '<button class="act ghost" id="reset">' + (scene.readout ? "重設" : "攤平") + '</button>';
     document.getElementById("slider").addEventListener("input", e => { stopFold(); setT(e.target.value/1000); });
-    document.getElementById("play").onclick = () => { if(foldAnim) stopFold(); else playTo(T > 0.5 ? 0 : 1); };
+    document.getElementById("play").onclick = togglePlay;
     document.getElementById("reset").onclick = () => { stopFold(); setT(0); };
     setT(0);
   } else {
@@ -2721,9 +2779,23 @@ function stopFold(){
   if(foldAnim){ cancelAnimationFrame(foldAnim); foldAnim = null; }
   const p = document.getElementById("play"); if(p) p.textContent = "播放";
 }
+function togglePlay(){
+  if(foldAnim){ stopFold(); return; }
+  if(scene.stepped){                                 // 逐步題目：一直向前播，播完再按就由第一步重播
+    if(T >= 1) setT(0);
+    playTo(1);
+  } else playTo(T > 0.5 ? 0 : 1);
+}
+// 逐步題目中，第 k 步對應 T ＝ (k−1) / N
+function stepT(dir){
+  const N = scene.stepped;
+  const k = Math.min(N, Math.max(1, Math.ceil(T*N + 0.0001)));
+  return Math.min(N-1, Math.max(0, k - 1 + dir)) / N;
+}
 function playTo(target){
   stopFold();
-  const from = T, dur = 1600, t0 = performance.now();
+  const from = T, t0 = performance.now();
+  const dur = scene.stepped ? Math.abs(target - from)*scene.stepped*1300 : 1600;   // 逐步題目每步停留約 1.3 秒
   const p = document.getElementById("play"); if(p) p.textContent = "暫停";
   const step = now => {
     const k = Math.min(1, (now - t0)/dur);
@@ -2759,7 +2831,7 @@ document.addEventListener("keydown", e => {
   if(tag === "BUTTON" && e.code === "Space") return;   // 空白鍵留給按鈕本身
   if(e.code === "Space"){
     e.preventDefault();
-    if(scene.kind === "fold"){ if(foldAnim) stopFold(); else playTo(T > 0.5 ? 0 : 1); }
+    if(scene.kind === "fold") togglePlay();
     else {
       const i = scene.views.indexOf(currentView);
       goView(scene.views[(i+1) % scene.views.length]);
@@ -2767,12 +2839,14 @@ document.addEventListener("keydown", e => {
   }
   if(e.code === "ArrowRight" || e.code === "PageDown"){
     e.preventDefault();
-    if(scene.kind === "fold"){ stopFold(); setT(T + 0.1); }
+    if(scene.stepped){ stopFold(); setT(stepT(+1)); }
+    else if(scene.kind === "fold"){ stopFold(); setT(T + 0.1); }
     else { const i = scene.views.indexOf(currentView); goView(scene.views[(i+1) % scene.views.length]); }
   }
   if(e.code === "ArrowLeft" || e.code === "PageUp"){
     e.preventDefault();
-    if(scene.kind === "fold"){ stopFold(); setT(T - 0.1); }
+    if(scene.stepped){ stopFold(); setT(stepT(-1)); }
+    else if(scene.kind === "fold"){ stopFold(); setT(T - 0.1); }
     else { const i = scene.views.indexOf(currentView); goView(scene.views[(i+scene.views.length-1) % scene.views.length]); }
   }
 });
